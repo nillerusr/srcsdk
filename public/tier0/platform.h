@@ -1099,7 +1099,11 @@ PLATFORM_INTERFACE struct tm *		Plat_localtime( const time_t *timep, struct tm *
 
 inline uint64 Plat_Rdtsc()
 {
-#if defined( _X360 )
+#if defined(__arm__) && defined(ANDROID)
+	struct timespec ts;
+	clock_gettime(CLOCK_REALTIME, &ts);
+	return ts.tv_sec * 1000000000ULL + ts.tv_nsec;
+#elif defined( _X360 )
 	return ( uint64 )__mftb32();
 #elif defined( _WIN64 )
 	return ( uint64 )__rdtsc();

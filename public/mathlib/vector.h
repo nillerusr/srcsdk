@@ -22,7 +22,7 @@
 // For rand(). We really need a library!
 #include <stdlib.h>
 
-#ifndef _X360
+#if !defined(_X360) && !defined(__arm__)
 // For MMX intrinsics
 #include <xmmintrin.h>
 #endif
@@ -211,7 +211,7 @@ private:
 FORCEINLINE void NetworkVarConstruct( Vector &v ) { v.Zero(); }
 
 
-#define USE_M64S ( ( !defined( _X360 ) ) )
+#define USE_M64S ( ( !defined( _X360 ) && !defined(__arm__) ) )
 
 
 

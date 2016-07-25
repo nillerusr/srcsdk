@@ -35,6 +35,10 @@ else
 endif
 
 # CPPFLAGS == "c/c++ *preprocessor* flags" - not "cee-plus-plus flags"
+ifeq ($(NDK),1)
+	DEFINES+=--sysroot=$(NDK_PATH)/platforms/android-$(APP_API_LEVEL)/arch-arm/ -I$(NDK_PATH)/sources/cxx-stl/stlport/stlport/ -DANDROID
+endif
+
 ARCH_FLAGS = 
 BUILDING_MULTI_ARCH = 0
 CPPFLAGS = $(DEFINES) $(addprefix -I, $(abspath $(INCLUDEDIRS) ))
@@ -67,6 +71,14 @@ ifeq ($(OS),Linux)
 	# We should always specify -Wl,--build-id, as documented at:
 	# http://linux.die.net/man/1/ld and http://fedoraproject.org/wiki/Releases/FeatureBuildId.http://fedoraproject.org/wiki/Releases/FeatureBuildId
 	LDFLAGS += -Wl,--build-id
+	ifeq ($(NDK),1)
+		CC := $(shell ndk-which gcc)
+		CXX := $(shell ndk-which g++)
+		LD := $(shell ndk-which ld)
+		AR := $(shell ndk-which ar)
+		CFLAGS += -march=armv7-a -mtune=cortex-a15 -mthumb -mfloat-abi=softfp -mfpu=neon -mcpu=cortex-a9 -pipe -mvectorize-with-neon-quad -fPIC
+		LDFLAGS += -march=armv7-a -mtune=cortex-a15 -mthumb -mfloat-abi=softfp -mfpu=neon -mcpu=cortex-a9 -pipe -mvectorize-with-neon-quad -fPIC -lm_hard -ldl -lgcc -no-canonical-prefixes -Wl,--fix-cortex-a8 -Wl,--no-warn-mismatch -Wl,--no-undefined -z,noexecstack -Wl,-z,relro -Wl,-z,now
+	else
 	# Set USE_VALVE_BINDIR to build with /Steam/tools/linux in the /valve/bin path.
 	#  Dedicated server uses this.
 	ifeq ($(USE_VALVE_BINDIR),1)
@@ -177,7 +189,7 @@ ifeq ($(OS),Linux)
 
 	LIB_START_SHLIB = $(PATHWRAP) -static-libgcc -Wl,--start-group
 	LIB_END_SHLIB = -Wl,--end-group -lm -ldl $(LIBSTDCXXPIC) -lpthread -l:$(LD_SO) -Wl,--version-script=$(SRCROOT)/devtools/version_script.linux.txt
-
+	endif
 endif
 
 ifeq ($(OS),Darwin)

@@ -8,6 +8,8 @@
 
 #if defined( _X360 )
 #include <xboxmath.h>
+#elif defined(__arm__)
+#include <SSE2NEON.h>
 #else
 #include <xmmintrin.h>
 #endif

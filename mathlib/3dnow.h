@@ -7,10 +7,12 @@
 #ifndef _3DNOW_H
 #define _3DNOW_H
 
+#ifndef ANDROID
 float _3DNow_Sqrt(float x);
 float _3DNow_RSqrt(float x);
 float FASTCALL _3DNow_VectorNormalize (Vector& vec);
 void FASTCALL _3DNow_VectorNormalizeFast (Vector& vec);
 float _3DNow_InvRSquared(const float* v);
+#endif
 
 #endif // _3DNOW_H
