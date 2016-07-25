@@ -66,7 +66,12 @@
 
 static bool s_bShowDiag;
 #define DEBUG_MSG( ... ) if ( s_bShowDiag ) fprintf( stderr, ##__VA_ARGS__ )
-#define DEBUG_BREAK() __asm__ __volatile__ ( "int $3" )
+
+#ifndef __arm__
+	#define DEBUG_BREAK() __asm__ __volatile__ ( "int $3" )
+#else
+	#define DEBUG_BREAK()
+#endif
 #define _COMPILE_TIME_ASSERT(pred) switch(0){case 0:case pred:;}
 
 #define WRAP( fn, ret, ... ) \
