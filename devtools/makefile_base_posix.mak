@@ -36,7 +36,7 @@ endif
 
 # CPPFLAGS == "c/c++ *preprocessor* flags" - not "cee-plus-plus flags"
 ifeq ($(NDK),1)
-	DEFINES+=--sysroot=$(NDK_PATH)/platforms/android-$(APP_API_LEVEL)/arch-arm/ -I$(NDK_PATH)/sources/cxx-stl/stlport/stlport/ -DANDROID
+	DEFINES+=--sysroot=$(NDK_PATH)/platforms/android-$(APP_API_LEVEL)/arch-arm/ -I$(NDK_PATH)/sources/cxx-stl/stlport/stlport/ -I$(NDK_PATH)/sources/android/support/include -DANDROID
 endif
 
 ARCH_FLAGS = 
@@ -456,6 +456,10 @@ cleantargets:
 
 $(LIB_File): $(OTHER_DEPENDENCIES) $(OBJS) 
 	$(QUIET_PREFIX) -$(P4_EDIT_START) $(LIB_File) $(P4_EDIT_END); 
+	@echo $(AR)
+	@echo $(LIB_File)
+	@echo $(OBJS)
+	@echo $(LIBFILES)
 	$(QUIET_PREFIX) $(AR) $(LIB_File) $(OBJS) $(LIBFILES);
 
 SO_GameOutputFile = $(GAMEOUTPUTFILE)
