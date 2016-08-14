@@ -61,6 +61,12 @@
 #define FORCE_INLINE					inline
 #endif
 
+#if GCC
+#define ALIGNED16						__attribute__((aligned(16)))
+#else
+#define ALIGNED16
+#endif
+
 #include "arm_neon.h"
 
 /*******************************************************/
@@ -112,21 +118,27 @@ FORCE_INLINE __m128 _mm_set_ps1(float _w)
 // Sets the four single-precision, floating-point values to the four inputs. https://msdn.microsoft.com/en-us/library/vstudio/afh0zf75(v=vs.100).aspx
 FORCE_INLINE __m128 _mm_set_ps(float w, float z, float y, float x)
 {
-	float __attribute__((aligned(16))) data[4] = { x, y, z, w };
+	float ALIGNED16 data[4] = { x, y, z, w };
 	return vld1q_f32(data);
 }
 
 // Sets the four single-precision, floating-point values to the four inputs in reverse order. https://msdn.microsoft.com/en-us/library/vstudio/d2172ct3(v=vs.100).aspx
 FORCE_INLINE __m128 _mm_setr_ps(float w, float z , float y , float x ) 
 {
-	float __attribute__ ((aligned (16))) data[4] = { w, z, y, x };
+	float ALIGNED16 data[4] = { w, z, y, x };
 	return vld1q_f32(data);
 }
 
 // Sets the low word of an single-precision, floating-point value to w and clears the upper three words. https://msdn.microsoft.com/en-us/library/0thxfyft(v=vs.90).aspx 
 FORCE_INLINE __m128 _mm_set_ss(float w)
 {
-	float __attribute__((aligned(16))) data[4] = { w, 0, 0, 0 };
+	float ALIGNED16 data[4] = { w, 0, 0, 0 };
+	return vld1q_f32(data);
+}
+
+FORCE_INLINE __m128 _mm_movehl_ps( __m128 a, __m128 b )
+{
+	float ALIGNED16 data[4] = { a[2], a[3], b[2], b[3] };
 	return vld1q_f32(data);
 }
 
@@ -139,7 +151,7 @@ FORCE_INLINE __m128i _mm_set1_epi32(int _i)
 // Sets the 4 signed 32-bit integer values. https://msdn.microsoft.com/en-us/library/vstudio/019beekt(v=vs.100).aspx
 FORCE_INLINE __m128i _mm_set_epi32(int i3, int i2, int i1, int i0)
 {
-	int32_t __attribute__((aligned(16))) data[4] = { i0, i1, i2, i3 };
+	int32_t ALIGNED16 data[4] = { i0, i1, i2, i3 };
 	return vld1q_s32(data);
 }
 
@@ -996,12 +1008,6 @@ FORCE_INLINE __m64i _mm_cvttps_pi32(__m128 a )
 	float32x2_t in = { a[0], a[1] };
 	
 	return vcvt_s32_f32( in );
-}
-
-FORCE_INLINE __m128 _mm_movehl_ps( __m128 a, __m128 b )
-{
-	float __attribute__((aligned(16))) data[4] = { a[2], a[3], b[2], b[3] }
-	return data;
 }
 
 #endif

@@ -2409,6 +2409,12 @@ FORCEINLINE i32x4 IntShiftLeftWordSIMD(const i32x4 &vSrcA, const i32x4 &vSrcB)
 // like this.
 FORCEINLINE void ConvertStoreAsIntsSIMD(intx4 * RESTRICT pDest, const fltx4 &vSrc)
 {
+#ifdef __arm__
+	(*pDest)[0] = (int)vSrc[0];
+	(*pDest)[1] = (int)vSrc[1];
+	(*pDest)[2] = (int)vSrc[2];
+	(*pDest)[3] = (int)vSrc[3];	
+#else
 	__m64 bottom = _mm_cvttps_pi32( vSrc );
 	__m64 top    = _mm_cvttps_pi32( _mm_movehl_ps(vSrc,vSrc) );
 
@@ -2416,6 +2422,7 @@ FORCEINLINE void ConvertStoreAsIntsSIMD(intx4 * RESTRICT pDest, const fltx4 &vSr
 	*reinterpret_cast<__m64 *>(&(*pDest)[2]) = top;
 
 	_mm_empty();
+#endif
 }
 
 
