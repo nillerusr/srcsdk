@@ -405,7 +405,7 @@ FORCE_INLINE __m128 _mm_shuffle_ps_function(__m128 a, __m128 b)
 		case _MM_SHUFFLE(2, 0, 1, 0): return _mm_shuffle_ps_2010(a, b); break;
 		case _MM_SHUFFLE(2, 0, 0, 1): return _mm_shuffle_ps_2001(a, b); break;
 		case _MM_SHUFFLE(2, 0, 3, 2): return _mm_shuffle_ps_2032(a, b); break;
-		default: _mm_shuffle_ps_default<i>(a, b);
+		default: return _mm_shuffle_ps_default<i>(a, b);
 	}
 }
 
