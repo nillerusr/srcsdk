@@ -286,7 +286,15 @@ endif
 # The compiler command lne for each src code file to compile
 #############################################################################
 
-OBJ_DIR = ./obj_$(NAME)_$(TARGET_PLATFORM)$(TARGET_PLATFORM_EXT)/$(CFG)
+
+ifeq ($(NDK),1)
+	OBJ_DIR = ./obj_$(NAME)_armeabi-v7a/$(CFG)
+	# Replace and update
+	ARFLAGS = "ru"
+else
+	OBJ_DIR = ./obj_$(NAME)_$(TARGET_PLATFORM)$(TARGET_PLATFORM_EXT)/$(CFG)
+	ARFLAGS = ""
+endif
 CPP_TO_OBJ = $(CPPFILES:.cpp=.o)
 CXX_TO_OBJ = $(CPP_TO_OBJ:.cxx=.o)
 CC_TO_OBJ = $(CXX_TO_OBJ:.cc=.o)
@@ -304,6 +312,10 @@ endif
 
 ifeq ($(MAKE_CC_VERBOSE),1)
 CC += -v
+endif
+
+ifeq ($(NDK),1)
+  OUTPUTFILE := $(subst linux32,armeabi-v7a,$(OUTPUTFILE))
 endif
 
 ifeq ($(CONFTYPE),lib)
@@ -456,11 +468,7 @@ cleantargets:
 
 $(LIB_File): $(OTHER_DEPENDENCIES) $(OBJS) 
 	$(QUIET_PREFIX) -$(P4_EDIT_START) $(LIB_File) $(P4_EDIT_END); 
-	@echo $(AR)
-	@echo $(LIB_File)
-	@echo $(OBJS)
-	@echo $(LIBFILES)
-	$(QUIET_PREFIX) $(AR) $(LIB_File) $(OBJS) $(LIBFILES);
+	$(QUIET_PREFIX) $(AR) $(ARFLAGS) $(LIB_File) $(OBJS) $(LIBFILES);
 
 SO_GameOutputFile = $(GAMEOUTPUTFILE)
 
