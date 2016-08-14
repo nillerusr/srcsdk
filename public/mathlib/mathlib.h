@@ -453,10 +453,10 @@ void inline SinCos( float radians, float *sine, float *cosine )
 		fstp DWORD PTR [edx]
 		fstp DWORD PTR [eax]
 	}
-#elif defined( PLATFORM_WINDOWS_PC64 )
+#elif defined( PLATFORM_WINDOWS_PC64 ) || defined(__arm__)
 	*sine = sin( radians );
 	*cosine = cos( radians );
-#elif defined( POSIX )
+#elif defined( POSIX )	
 	register double __cosr, __sinr;
 	__asm ("fsincos" : "=t" (__cosr), "=u" (__sinr) : "0" (radians));
 

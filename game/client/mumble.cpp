@@ -98,7 +98,7 @@ void CMumbleSystem::LevelInitPostEntity()
 		g_hMapObject = NULL;
 		return;
 	}
-#elif defined( POSIX )
+#elif defined( POSIX ) && !defined(__ANDROID__)
 	char memname[256];
 	V_sprintf_safe( memname, "/MumbleLink.%d", getuid() );
 
@@ -128,7 +128,7 @@ void CMumbleSystem::LevelShutdownPreEntity()
 		g_pMumbleMemory = NULL;
 		g_hMapObject = NULL;
 	}
-#elif defined( POSIX )
+#elif defined( POSIX ) && !defined(__ANDROID__)
 	if ( g_pMumbleMemory )
 	{
 		munmap( g_pMumbleMemory, sizeof(struct MumbleSharedMemory_t) );

@@ -16,7 +16,7 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-#ifndef COMPILER_MSVC64
+#if !defined(COMPILER_MSVC64) && !defined(__arm__)
 // Implement for 64-bit Windows if needed.
 
 static const uint32 _sincos_masks[]	  = { (uint32)0x0,  (uint32)~0x0 };
@@ -87,7 +87,9 @@ float _SSE_Sqrt(float x)
 {
 	Assert( s_bMathlibInitialized );
 	float	root = 0.f;
-#ifdef _WIN32
+#ifdef __arm__
+	root = sqrt(x); // TODO: REPLACE WITH NEON
+#elif _WIN32
 	_asm
 	{
 		sqrtss		xmm0, x
@@ -126,8 +128,21 @@ const __m128  f05 = _mm_set_ss(0.5f);  // 0.5 as SSE value
 // Intel / Kipps SSE RSqrt.  Significantly faster than above.
 float _SSE_RSqrtAccurate(float a)
 {
+#ifdef __arm__
+	int	i;
+	float	x, y;
 
-#ifdef _WIN32
+	if( number == 0.0f )
+		return 0.0f;
+
+	x = number * 0.5f;
+	i = *(int *)&number;	// evil floating point bit level hacking
+	i = 0x5f3759df - (i >> 1);	// what the fuck?
+	y = *(float *)&i;
+	y = y * (1.5f - (x * y * y));	// first iteration
+
+	return y;
+#elif _WIN32
 	float x;
 	float half = 0.5f;
 	float three = 3.f;
@@ -174,9 +189,12 @@ float _SSE_RSqrtAccurate(float a)
 float _SSE_RSqrtFast(float x)
 {
 	Assert( s_bMathlibInitialized );
-
+	
 	float rroot;
-#ifdef _WIN32
+	
+#ifdef __arm__
+	rroot = _SSE_RSqrtAccurate(x);
+#elif _WIN32
 	_asm
 	{
 		rsqrtss	xmm0, x
@@ -211,8 +229,13 @@ float FASTCALL _SSE_VectorNormalize (Vector& vec)
 	// be much of a performance win, considering you will very likely miss 3 branch predicts in a row.
 	if ( v[0] || v[1] || v[2] )
 	{
-#ifdef _WIN32
-	_asm
+#ifdef __arm__
+		float rsqrt = _SSE_RSqrtAccurate( v[0] * v[0] + v[1] * v[1] + v[2] * v[2] );
+		r[0] = v[0] * rsqrt;
+		r[1] = v[1] * rsqrt;
+		r[2] = v[2] * rsqrt;
+#elif _WIN32
+		_asm
 		{
 			mov			eax, v
 			mov			edx, r
@@ -285,7 +308,9 @@ void FASTCALL _SSE_VectorNormalizeFast (Vector& vec)
 float _SSE_InvRSquared(const float* v)
 {
 	float	inv_r2 = 1.f;
-#ifdef _WIN32
+#ifdef __arm__
+	return _SSE_RSqrtAccurate( FLT_EPSILON + v[0] * v[0] + v[1] * v[1] + v[2] * v[2] );
+#elif _WIN32
 	_asm { // Intel SSE only routine
 		mov			eax, v
 		movss		xmm5, inv_r2		// x5 = 1.0, 0, 0, 0
