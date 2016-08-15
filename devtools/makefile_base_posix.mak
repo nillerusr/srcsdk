@@ -36,10 +36,13 @@ endif
 
 # CPPFLAGS == "c/c++ *preprocessor* flags" - not "cee-plus-plus flags"
 ifeq ($(NDK),1)
-	DEFINES+=--sysroot=$(NDK_PATH)/platforms/android-$(APP_API_LEVEL)/arch-arm/ -I$(NDK_PATH)/sources/cxx-stl/stlport/stlport/ -I$(NDK_PATH)/sources/android/support/include -DANDROID
+	SYSROOT := "$(NDK_PATH)/platforms/android-$(APP_API_LEVEL)/arch-arm"
+	SYSROOTFLAG := "--sysroot=$(SYSROOT)"
+	ARCH_FLAGS := $(SYSROOTFLAG) -I$(NDK_PATH)/sources/cxx-stl/stlport/stlport/ -I$(NDK_PATH)/sources/android/support/include -DANDROID
+else
+	ARCH_FLAGS = 
 endif
 
-ARCH_FLAGS = 
 BUILDING_MULTI_ARCH = 0
 CPPFLAGS = $(DEFINES) $(addprefix -I, $(abspath $(INCLUDEDIRS) ))
 CFLAGS = $(ARCH_FLAGS) $(CPPFLAGS) $(WARN_FLAGS) -fvisibility=$(SymbolVisibility) $(OptimizerLevel) -pipe $(GCC_ExtraCompilerFlags) -Usprintf -Ustrncpy -UPROTECTED_THINGS_ENABLE
@@ -71,93 +74,95 @@ ifeq ($(OS),Linux)
 	# We should always specify -Wl,--build-id, as documented at:
 	# http://linux.die.net/man/1/ld and http://fedoraproject.org/wiki/Releases/FeatureBuildId.http://fedoraproject.org/wiki/Releases/FeatureBuildId
 	LDFLAGS += -Wl,--build-id
+	CCACHE := $(SRCROOT)/devtools/bin/linux/ccache
 	ifeq ($(NDK),1)
-		CC := $(shell ndk-which gcc)
-		CXX := $(shell ndk-which g++)
-		LD := $(shell ndk-which ld)
-		AR := $(shell ndk-which ar)
-		LINK := $(shell ndk-which ld)
+		CC = $(shell ndk-which gcc)
+		CXX = $(shell ndk-which g++)
+		LD = $(shell ndk-which ld)
+		AR = $(shell ndk-which ar)
+		LINK = $(shell ndk-which gcc)
+		STRIP = $(shell ndk-which strip)
 		CFLAGS += -march=armv7-a -mtune=cortex-a15 -mthumb -mfloat-abi=softfp -mfpu=neon -mcpu=cortex-a9 -pipe -mvectorize-with-neon-quad -fPIC
 		LDFLAGS += -march=armv7-a -mtune=cortex-a15 -mthumb -mfloat-abi=softfp -mfpu=neon -mcpu=cortex-a9 -pipe -mvectorize-with-neon-quad -fPIC -lm_hard -ldl -lgcc -no-canonical-prefixes -Wl,--fix-cortex-a8 -Wl,--no-warn-mismatch -Wl,--no-undefined -z,noexecstack -Wl,-z,relro -Wl,-z,now
-	else
-	# Set USE_VALVE_BINDIR to build with /Steam/tools/linux in the /valve/bin path.
-	#  Dedicated server uses this.
-	ifeq ($(USE_VALVE_BINDIR),1)
-		# dedicated server flags
-		ifeq ($(TARGET_PLATFORM),linux64)
-			VALVE_BINDIR = /valve/bin64/
-			MARCH_TARGET = nocona
-		else
-			VALVE_BINDIR = /valve/bin/
-			MARCH_TARGET = pentium4
-		endif
-		STRIP_FLAGS =
-	else
-		# linux desktop client flags
-		VALVE_BINDIR =
-		# If the steam-runtime is available, use it. We should just default to using it when
-		#  buildbot and everyone has a bit of time to get it installed.
-		ifneq "$(wildcard /valve/steam-runtime/bin/)" ""
-			# The steam-runtime is incompatible with clang at this point, so disable it
-			# if clang is enabled.
-			ifneq ($(CXX),clang++)
-				VALVE_BINDIR = /valve/steam-runtime/bin/
+	else # Already set for NDK
+		# Set USE_VALVE_BINDIR to build with /Steam/tools/linux in the /valve/bin path.
+		#  Dedicated server uses this.
+		ifeq ($(USE_VALVE_BINDIR),1)
+			# dedicated server flags
+			ifeq ($(TARGET_PLATFORM),linux64)
+				VALVE_BINDIR = /valve/bin64/
+				MARCH_TARGET = nocona
+			else
+				VALVE_BINDIR = /valve/bin/
+				MARCH_TARGET = pentium4
 			endif
+			STRIP_FLAGS =
+		else
+			# linux desktop client flags
+			VALVE_BINDIR =
+			# If the steam-runtime is available, use it. We should just default to using it when
+			#  buildbot and everyone has a bit of time to get it installed.
+			ifneq "$(wildcard /valve/steam-runtime/bin/)" ""
+				# The steam-runtime is incompatible with clang at this point, so disable it
+				# if clang is enabled.
+				ifneq ($(CXX),clang++)
+					VALVE_BINDIR = /valve/steam-runtime/bin/
+				endif
+			endif
+			GCC_VER =
+			MARCH_TARGET = pentium4
+			# On dedicated servers, some plugins depend on global variable symbols in addition to functions.
+			# So symbols like _Z16ClearMultiDamagev should show up when you do "nm server_srv.so" in TF2.
+			STRIP_FLAGS = -x
 		endif
-		GCC_VER =
-		MARCH_TARGET = pentium4
-		# On dedicated servers, some plugins depend on global variable symbols in addition to functions.
-		# So symbols like _Z16ClearMultiDamagev should show up when you do "nm server_srv.so" in TF2.
-		STRIP_FLAGS = -x
-	endif
-
-	ifeq ($(CXX),clang++)
-		# Clang does not support -mfpmath=sse because it uses whatever
-		# instruction set extensions are available by default.
-		SSE_GEN_FLAGS = -msse2
-	else
-		SSE_GEN_FLAGS = -msse2 -mfpmath=sse
-	endif
-
-	CCACHE := $(SRCROOT)/devtools/bin/linux/ccache
-
-	ifeq ($(origin GCC_VER), undefined)
-	GCC_VER=-4.6
-	endif
-	ifeq ($(origin AR), default)
-		AR = $(VALVE_BINDIR)ar crs
-	endif
-	ifeq ($(origin CC),default)
-		CC = $(CCACHE) $(VALVE_BINDIR)gcc$(GCC_VER)	
-	endif
-	ifeq ($(origin CXX), default)
-		CXX = $(CCACHE) $(VALVE_BINDIR)g++$(GCC_VER)
-	endif
-	# Support ccache with clang. Add -Qunused-arguments to avoid excessive warnings due to
-	# a ccache quirk. Could also upgrade ccache.
-	# http://petereisentraut.blogspot.com/2011/05/ccache-and-clang.html
-	ifeq ($(CC),clang)
-		CC = $(CCACHE) $(VALVE_BINDIR)clang -Qunused-arguments
-	endif
-	ifeq ($(CXX),clang++)
-		CXX = $(CCACHE) $(VALVE_BINDIR)clang++ -Qunused-arguments
-	endif
-	LINK ?= $(CC)
-
-	ifeq ($(TARGET_PLATFORM),linux64)
-		# nocona = pentium4 + 64bit + MMX, SSE, SSE2, SSE3 - no SSSE3 (that's three s's - added in core2)
-		ARCH_FLAGS += -march=$(MARCH_TARGET) -mtune=core2
-		LD_SO = ld-linux-x86_64.so.2
-		LIBSTDCXX := $(shell $(CXX) -print-file-name=libstdc++.a)
-		LIBSTDCXXPIC := $(shell $(CXX) -print-file-name=libstdc++-pic.a)
-	else
-		# pentium4 = MMX, SSE, SSE2 - no SSE3 (added in prescott) # -msse3 -mfpmath=sse
-		ARCH_FLAGS += -m32 -march=$(MARCH_TARGET) -mtune=core2 $(SSE_GEN_FLAGS)
-		LD_SO = ld-linux.so.2
-		LIBSTDCXX := $(shell $(CXX) $(ARCH_FLAGS) -print-file-name=libstdc++.so)
-		LIBSTDCXXPIC := $(shell $(CXX) $(ARCH_FLAGS) -print-file-name=libstdc++.so)
-		LDFLAGS += -m32
-	endif
+	
+		ifeq ($(CXX),clang++)
+			# Clang does not support -mfpmath=sse because it uses whatever
+			# instruction set extensions are available by default.
+			SSE_GEN_FLAGS = -msse2
+		else
+			SSE_GEN_FLAGS = -msse2 -mfpmath=sse
+		endif
+	
+		
+		ifeq ($(origin GCC_VER), undefined)
+			GCC_VER=-4.6
+		endif
+		ifeq ($(origin AR), default)
+			AR = $(VALVE_BINDIR)ar crs
+		endif
+		ifeq ($(origin CC),default)
+			CC = $(CCACHE) $(VALVE_BINDIR)gcc$(GCC_VER)	
+		endif
+		ifeq ($(origin CXX), default)
+			CXX = $(CCACHE) $(VALVE_BINDIR)g++$(GCC_VER)
+		endif
+		# Support ccache with clang. Add -Qunused-arguments to avoid excessive warnings due to
+		# a ccache quirk. Could also upgrade ccache.
+		# http://petereisentraut.blogspot.com/2011/05/ccache-and-clang.html
+		ifeq ($(CC),clang)
+			CC = $(CCACHE) $(VALVE_BINDIR)clang -Qunused-arguments
+		endif
+		ifeq ($(CXX),clang++)
+			CXX = $(CCACHE) $(VALVE_BINDIR)clang++ -Qunused-arguments
+		endif
+		LINK ?= $(CC)
+	
+		ifeq ($(TARGET_PLATFORM),linux64)
+			# nocona = pentium4 + 64bit + MMX, SSE, SSE2, SSE3 - no SSSE3 (that's three s's - added in core2)
+			ARCH_FLAGS += -march=$(MARCH_TARGET) -mtune=core2
+			LD_SO = ld-linux-x86_64.so.2
+			LIBSTDCXX := $(shell $(CXX) -print-file-name=libstdc++.a)
+			LIBSTDCXXPIC := $(shell $(CXX) -print-file-name=libstdc++-pic.a)
+		else
+			# pentium4 = MMX, SSE, SSE2 - no SSE3 (added in prescott) # -msse3 -mfpmath=sse
+			ARCH_FLAGS += -m32 -march=$(MARCH_TARGET) -mtune=core2 $(SSE_GEN_FLAGS)
+			LD_SO = ld-linux.so.2
+			LIBSTDCXX := $(shell $(CXX) $(ARCH_FLAGS) -print-file-name=libstdc++.so)
+			LIBSTDCXXPIC := $(shell $(CXX) $(ARCH_FLAGS) -print-file-name=libstdc++.so)
+			LDFLAGS += -m32
+		endif
+	endif # NDK
 
 	GEN_SYM ?= $(SRCROOT)/devtools/gendbg.sh
 	ifeq ($(CFG),release)
@@ -188,88 +193,93 @@ ifeq ($(OS),Linux)
 	LIB_START_EXE = $(PATHWRAP) -static-libgcc -Wl,--start-group
 	LIB_END_EXE = -Wl,--end-group -lm -ldl $(LIBSTDCXX) -lpthread 
 
-	LIB_START_SHLIB = $(PATHWRAP) -static-libgcc -Wl,--start-group
-	LIB_END_SHLIB = -Wl,--end-group -lm -ldl $(LIBSTDCXXPIC) -lpthread -l:$(LD_SO) -Wl,--version-script=$(SRCROOT)/devtools/version_script.linux.txt
+	ifeq ($(NDK),1)
+		#LIB_END_SHLIB = "-Wl,--end-group -L$(SYSROOT)/usr/lib -lm_hard -ldl -lz -landroid -lstdc++ -lc -llog -Wl,--version-script=$(SRCROOT)/devtools/version_script.linux.txt"
+		LIB_START_SHLIB = $(PATHWRAP) -Wl,--start-group
+		LIB_END_SHLIB := "-Wl,--end-group -lm -ldl $(LIBSTDCXXPIC) -lz -landroid -llog -Wl,--version-script=$(SRCROOT)/devtools/version_script.linux.txt"
+	else
+		LIB_START_SHLIB = $(PATHWRAP) -static-libgcc -Wl,--start-group
+		LIB_END_SHLIB := -Wl,--end-group -lm -ldl $(LIBSTDCXXPIC) -lpthread -l:$(LD_SO) -Wl,--version-script=$(SRCROOT)/devtools/version_script.linux.txt
 	endif
 endif
 
-ifeq ($(OS),Darwin)
-	CCACHE := $(SRCROOT)/devtools/bin/osx32/ccache
-	MAC_SDK_VER ?= 10.6
-	MAC_SDK := macosx$(MAC_SDK_VER)
-	SYSROOT := $(shell xcodebuild -sdk $(MAC_SDK) -version Path)
-
-	ifneq ($(origin MAC_SDK_VER), file)
-            $(warning Attempting build with SDK version $(MAC_SDK_VER), only 10.6 is supported and recommended!)
-	endif
-
-	ifeq ($(SYSROOT),)
-		FIRSTSDK := $(firstword $(sort $(shell xcodebuild -showsdks | grep macosx | sed 's/.*macosx//')))
-                $(error Could not find SDK version $(MAC_SDK_VER). Install and configure Xcode 4.3, or build with: make MAC_SDK_VER=$(FIRSTSDK))
-	endif
-
-	ifeq ($(origin CC), default)
-                # Test to see if you have a compiler in the right place, if you
-                # don't abort with an error
-		CLANG := $(shell xcrun -sdk $(MAC_SDK) -find clang)
-		ifeq ($(wildcard $(CLANG)),)
-                        $(error Unable to find C compiler, install and configure Xcode 4.3)
-		endif
-
-		CC := $(CCACHE) $(CLANG) -Qunused-arguments
-	endif
-
-	ifeq ($(origin CXX), default)
-		CXXLANG := $(shell xcrun -sdk $(MAC_SDK) -find clang++)
-		ifeq ($(wildcard $(CXXLANG)),)
-                        $(error Unable to find C++ compiler, install and configure Xcode 4.3)
-		endif
-
-		CXX := $(CCACHE) $(CXXLANG) -Qunused-arguments
-	endif
-	LINK ?= $(CXX)
-
-	ifeq ($(origin AR), default)
-		AR := $(shell xcrun -sdk $(MAC_SDK) -find libtool) -static -o
-	endif
-
-	ifeq ($(TARGET_PLATFORM),osx64)
-		ARCH_FLAGS += -arch x86_64 -m64 -march=core2
-	else ifeq (,$(findstring -arch x86_64,$(GCC_ExtraCompilerFlags)))
-		ARCH_FLAGS += -arch i386 -m32 -march=prescott -momit-leaf-frame-pointer -mtune=core2
-	else
-		# dirty hack to build a universal binary - don't specify the architecture
-		ARCH_FLAGS += -arch i386 -Xarch_i386 -march=prescott -Xarch_i386 -mtune=core2 -Xarch_i386 -momit-leaf-frame-pointer -Xarch_x86_64 -march=core2
-	endif
-
-	GEN_SYM ?= $(shell xcrun -sdk $(MAC_SDK) -find dsymutil)
-	ifeq ($(CFG),release)
-		STRIP ?= strip -S
-	else
-		STRIP ?= true
-	endif
-	ifeq ($(SOURCE_SDK), 1)
-		VSIGN ?= true
-	else
-		VSIGN ?= $(SRCROOT)/devtools/bin/vsign
-	endif
-
-	CPPFLAGS += -I$(SYSROOT)/usr/include/malloc
-	CFLAGS += -isysroot $(SYSROOT) -mmacosx-version-min=10.5 -fasm-blocks
-
-	LIB_START_EXE = -lm -ldl -lpthread
-	LIB_END_EXE = 
-
-	LIB_START_SHLIB = 
-	LIB_END_SHLIB = 
-
-	SHLIBLDFLAGS = $(LDFLAGS) -bundle -flat_namespace -undefined suppress -Wl,-dead_strip -Wl,-no_dead_strip_inits_and_terms 
-
-	ifeq (lib,$(findstring lib,$(GAMEOUTPUTFILE)))
-		SHLIBLDFLAGS = $(LDFLAGS) -dynamiclib -current_version 1.0 -compatibility_version 1.0 -install_name @rpath/$(basename $(notdir $(GAMEOUTPUTFILE))).dylib $(SystemLibraries) -Wl,-dead_strip -Wl,-no_dead_strip_inits_and_terms 
-	endif
-
-endif
+#ifeq ($(OS),Darwin)
+#	CCACHE := $(SRCROOT)/devtools/bin/osx32/ccache
+#	MAC_SDK_VER ?= 10.6
+#	MAC_SDK := macosx$(MAC_SDK_VER)
+#	SYSROOT := $(shell xcodebuild -sdk $(MAC_SDK) -version Path)
+#
+#	ifneq ($(origin MAC_SDK_VER), file)
+#           $(warning Attempting build with SDK version $(MAC_SDK_VER), only 10.6 is supported and recommended!)
+#	endif
+#
+#	ifeq ($(SYSROOT),)
+#		FIRSTSDK := $(firstword $(sort $(shell xcodebuild -showsdks | grep macosx | sed 's/.*macosx//')))
+#                $(error Could not find SDK version $(MAC_SDK_VER). Install and configure Xcode 4.3, or build with: make MAC_SDK_VER=$(FIRSTSDK))
+#	endif
+#
+#	ifeq ($(origin CC), default)
+#                # Test to see if you have a compiler in the right place, if you
+#                # don't abort with an error
+#		CLANG := $(shell xcrun -sdk $(MAC_SDK) -find clang)
+#		ifeq ($(wildcard $(CLANG)),)
+#                        $(error Unable to find C compiler, install and configure Xcode 4.3)
+#		endif
+#
+#		CC := $(CCACHE) $(CLANG) -Qunused-arguments
+#	endif
+#
+#	ifeq ($(origin CXX), default)
+#		CXXLANG := $(shell xcrun -sdk $(MAC_SDK) -find clang++)
+#		ifeq ($(wildcard $(CXXLANG)),)
+#			$(error Unable to find C++ compiler, install and configure Xcode 4.3)
+#		endif
+#
+#		CXX := $(CCACHE) $(CXXLANG) -Qunused-arguments
+#	endif
+#	LINK ?= $(CXX)
+#
+#	ifeq ($(origin AR), default)
+#		AR := $(shell xcrun -sdk $(MAC_SDK) -find libtool) -static -o
+#	endif
+#
+#	ifeq ($(TARGET_PLATFORM),osx64)
+#		ARCH_FLAGS += -arch x86_64 -m64 -march=core2
+#	else ifeq (,$(findstring -arch x86_64,$(GCC_ExtraCompilerFlags)))
+#		ARCH_FLAGS += -arch i386 -m32 -march=prescott -momit-leaf-frame-pointer -mtune=core2
+#	else
+#		# dirty hack to build a universal binary - don't specify the architecture
+#		ARCH_FLAGS += -arch i386 -Xarch_i386 -march=prescott -Xarch_i386 -mtune=core2 -Xarch_i386 -momit-leaf-frame-pointer -Xarch_x86_64 -march=core2
+#	endif
+#
+#	GEN_SYM ?= $(shell xcrun -sdk $(MAC_SDK) -find dsymutil)
+#	ifeq ($(CFG),release)
+#		STRIP ?= strip -S
+#	else
+#		STRIP ?= true
+#	endif
+#	ifeq ($(SOURCE_SDK), 1)
+#		VSIGN ?= true
+#	else
+#		VSIGN ?= $(SRCROOT)/devtools/bin/vsign
+#	endif
+#
+#	CPPFLAGS += -I$(SYSROOT)/usr/include/malloc
+#	CFLAGS += -isysroot $(SYSROOT) -mmacosx-version-min=10.5 -fasm-blocks
+#
+#	LIB_START_EXE = -lm -ldl -lpthread
+#	LIB_END_EXE = 
+#
+#	LIB_START_SHLIB = 
+#	LIB_END_SHLIB = 
+#
+#	SHLIBLDFLAGS = $(LDFLAGS) -bundle -flat_namespace -undefined suppress -Wl,-dead_strip -Wl,-no_dead_strip_inits_and_terms 
+#
+#	ifeq (lib,$(findstring lib,$(GAMEOUTPUTFILE)))
+#		SHLIBLDFLAGS = $(LDFLAGS) -dynamiclib -current_version 1.0 -compatibility_version 1.0 -install_name @rpath/$(basename $(notdir $(GAMEOUTPUTFILE))).dylib $(SystemLibraries) -Wl,-dead_strip -Wl,-no_dead_strip_inits_and_terms 
+#	endif
+#
+#endif
 
 #
 # Profile-directed optimizations.
@@ -282,6 +292,9 @@ endif
 # Then, comment the above flags out again and rebuild with this flag uncommented:
 # PROFILE_COMPILER_FLAG=-fprofile-use
 #
+
+PROFILE_LINKER_FLAG = 
+PROFILE_COMPILER_FLAG = 
 
 #############################################################################
 # The compiler command lne for each src code file to compile
@@ -351,10 +364,8 @@ ifeq ($(BUILDING_MULTI_ARCH),1)
 		$(CXX) $(CXXFLAGS) -o $@ -c $<
 else
 	COMPILE_FILE = \
-		$(QUIET_PREFIX) \
-		echo "---- $(lastword $(subst /, ,$<)) ----";\
-		mkdir -p $(OBJ_DIR) && \
-		$(CXX) $(CXXFLAGS) $(GENDEP_CXXFLAGS) -o $@ -c $<
+		$(QUIET_PREFIX) echo "---- $(lastword $(subst /, ,$<)) ----: $(CXX) $(CXXFLAGS) $(GENDEP_CXXFLAGS) -o $@ -c $<";\
+		mkdir -p $(OBJ_DIR) && $(CXX) $(CXXFLAGS) $(GENDEP_CXXFLAGS) -o $@ -c $<
 endif
 
 ifneq "$(origin VALVE_NO_AUTO_P4)" "undefined"
@@ -512,10 +523,10 @@ $(SO_GameOutputFile): $(SO_File)
 $(SO_File): $(OTHER_DEPENDENCIES) $(OBJS) $(LIBFILENAMES)
 	$(QUIET_PREFIX) \
 	echo "----" $(QUIET_ECHO_POSTFIX);\
-	echo "---- LINKING $@ [$(CFG)] 	$(LINK) -o $(OUTPUTFILE) $(LIB_START_SHLIB) $(OBJS) $(LIBFILES) $(SystemLibraries) $(LINK_MAP_FLAGS) $(SHLIBLDFLAGS) $(PROFILE_LINKER_FLAGS); ----";\
+	echo "---- LINKING $@ [$(CFG)] ----: $(LINK) $(SYSROOTFLAG) -o $(OUTPUTFILE) $(LIB_START_SHLIB) $(OBJS) $(LIBFILES) $(SystemLibraries) $(LINK_MAP_FLAGS) $(SHLIBLDFLAGS) $(PROFILE_LINKER_FLAG) $(LIB_END_SHLIB);";\
 	echo "----" $(QUIET_ECHO_POSTFIX);\
 	\
-	$(LINK) -o $(OUTPUTFILE) $(LIB_START_SHLIB) $(OBJS) $(LIBFILES) $(SystemLibraries) $(LINK_MAP_FLAGS) $(SHLIBLDFLAGS) $(PROFILE_LINKER_FLAG) $(LIB_END_SHLIB);
+	$(LINK) $(SYSROOTFLAG) -o $(OUTPUTFILE) $(LIB_START_SHLIB) $(OBJS) $(LIBFILES) $(SystemLibraries) $(LINK_MAP_FLAGS) $(SHLIBLDFLAGS) $(PROFILE_LINKER_FLAG) $(LIB_END_SHLIB);
 	$(VSIGN) -signvalve $(OUTPUTFILE);
 
 
