@@ -119,6 +119,7 @@
 #else
 	#ifndef _MSC_VER
 		// sys/param.h sets BYTE_ORDER on linux/osx
+		#include <sys/endian.h>
 		#include <sys/param.h>
 	#else
 		// All our known win32 platforms are little endian
