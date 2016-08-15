@@ -76,6 +76,7 @@ ifeq ($(OS),Linux)
 		CXX := $(shell ndk-which g++)
 		LD := $(shell ndk-which ld)
 		AR := $(shell ndk-which ar)
+		LINK := $(shell ndk-which ld)
 		CFLAGS += -march=armv7-a -mtune=cortex-a15 -mthumb -mfloat-abi=softfp -mfpu=neon -mcpu=cortex-a9 -pipe -mvectorize-with-neon-quad -fPIC
 		LDFLAGS += -march=armv7-a -mtune=cortex-a15 -mthumb -mfloat-abi=softfp -mfpu=neon -mcpu=cortex-a9 -pipe -mvectorize-with-neon-quad -fPIC -lm_hard -ldl -lgcc -no-canonical-prefixes -Wl,--fix-cortex-a8 -Wl,--no-warn-mismatch -Wl,--no-undefined -z,noexecstack -Wl,-z,relro -Wl,-z,now
 	else
@@ -291,6 +292,8 @@ ifeq ($(NDK),1)
 	OBJ_DIR = ./obj_$(NAME)_armeabi-v7a/$(CFG)
 	# Replace and update
 	ARFLAGS = "ru"
+	LIBFILES := $(subst linux32,armeabi-v7a,$(LIBFILES))
+	#LIBFILENAMES := $(subst linux32,armeabi-v7a,$(LIBFILENAMES))
 else
 	OBJ_DIR = ./obj_$(NAME)_$(TARGET_PLATFORM)$(TARGET_PLATFORM_EXT)/$(CFG)
 	ARFLAGS = ""
@@ -300,6 +303,7 @@ CXX_TO_OBJ = $(CPP_TO_OBJ:.cxx=.o)
 CC_TO_OBJ = $(CXX_TO_OBJ:.cc=.o)
 MM_TO_OBJ = $(CC_TO_OBJ:.mm=.o)
 C_TO_OBJ = $(MM_TO_OBJ:.c=.o)
+PROFILE_LINKER_FLAG =
 OBJS = $(addprefix $(OBJ_DIR)/, $(notdir $(C_TO_OBJ)))
 
 ifeq ($(MAKE_VERBOSE),1)
@@ -508,10 +512,10 @@ $(SO_GameOutputFile): $(SO_File)
 $(SO_File): $(OTHER_DEPENDENCIES) $(OBJS) $(LIBFILENAMES)
 	$(QUIET_PREFIX) \
 	echo "----" $(QUIET_ECHO_POSTFIX);\
-	echo "---- LINKING $@ [$(CFG)] ----";\
+	echo "---- LINKING $@ [$(CFG)] 	$(LINK) -o $(OUTPUTFILE) $(LIB_START_SHLIB) $(OBJS) $(LIBFILES) $(SystemLibraries) $(LINK_MAP_FLAGS) $(SHLIBLDFLAGS) $(PROFILE_LINKER_FLAGS); ----";\
 	echo "----" $(QUIET_ECHO_POSTFIX);\
 	\
-	$(LINK) $(LINK_MAP_FLAGS) $(SHLIBLDFLAGS) $(PROFILE_LINKER_FLAG) -o $(OUTPUTFILE) $(LIB_START_SHLIB) $(OBJS) $(LIBFILES) $(SystemLibraries) $(LIB_END_SHLIB);
+	$(LINK) -o $(OUTPUTFILE) $(LIB_START_SHLIB) $(OBJS) $(LIBFILES) $(SystemLibraries) $(LINK_MAP_FLAGS) $(SHLIBLDFLAGS) $(PROFILE_LINKER_FLAG) $(LIB_END_SHLIB);
 	$(VSIGN) -signvalve $(OUTPUTFILE);
 
 
