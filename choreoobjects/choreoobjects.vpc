@@ -1,0 +1,22 @@
+$Macro SRCDIR		".."
+$Include "$SRCDIR\vpc_scripts\source_lib_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories	"$BASE;$SRCDIR\game\shared;$SRCDIR\utils\common;"
+	}
+}
+
+$Project "choreoobjects"
+{
+	$Folder	"Source Files"
+	{
+		$File	"$SRCDIR\game\shared\choreoactor.cpp"
+		$File	"$SRCDIR\game\shared\choreochannel.cpp"
+		$File	"$SRCDIR\game\shared\choreoevent.cpp"
+		$File	"$SRCDIR\game\shared\choreoscene.cpp"
+		$File	"$SRCDIR\game\shared\sceneimage.cpp"
+	}
+}
