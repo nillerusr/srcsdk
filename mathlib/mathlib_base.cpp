@@ -3333,7 +3333,7 @@ void MathLib_Init( float gamma, float texGamma, float brightness, int overbright
 
 	// SSE Generally performs better than 3DNow when present, so this is placed 
 	// first to allow SSE to override these settings.
-#if !defined( OSX ) && !defined( PLATFORM_WINDOWS_PC64 ) && !defined(LINUX)
+#if !defined( OSX ) && !defined( PLATFORM_WINDOWS_PC64 ) && !defined(LINUX) && !defined(__arm__)
 	if ( bAllow3DNow && pi.m_b3DNow )
 	{
 		s_b3DNowEnabled = true;
@@ -3356,7 +3356,7 @@ void MathLib_Init( float gamma, float texGamma, float brightness, int overbright
 	{
 		s_bSSEEnabled = true;
 
-#ifndef PLATFORM_WINDOWS_PC64
+#if !defined(PLATFORM_WINDOWS_PC64) && !defined(__arm__)
 		// These are not yet available.
 		// Select the SSE specific routines if available
 		pfVectorNormalize = _VectorNormalize;
@@ -3366,7 +3366,7 @@ void MathLib_Init( float gamma, float texGamma, float brightness, int overbright
 		pfRSqrt = _SSE_RSqrtAccurate;
 		pfRSqrtFast = _SSE_RSqrtFast;
 #endif
-#ifdef PLATFORM_WINDOWS_PC32
+#if defined(PLATFORM_WINDOWS_PC32) && !defined(__arm__)
 		pfFastSinCos = _SSE_SinCos;
 		pfFastCos = _SSE_cos;
 #endif
@@ -3379,7 +3379,7 @@ void MathLib_Init( float gamma, float texGamma, float brightness, int overbright
 	if ( bAllowSSE2 && pi.m_bSSE2 )
 	{
 		s_bSSE2Enabled = true;
-#ifdef PLATFORM_WINDOWS_PC32
+#if defined(PLATFORM_WINDOWS_PC32) && !defined(__arm__)
 		pfFastSinCos = _SSE2_SinCos;
 		pfFastCos = _SSE2_cos;
 #endif
