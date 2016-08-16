@@ -36,6 +36,8 @@
 
 #ifdef LINUX
 
+#define __USE_LARGEFILE64
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -754,6 +756,7 @@ extern "C" {
 	}
 
 
+#ifndef ANDROID
 	WRAP(fopen64, FILE *, const char *path, const char *mode)
 	{
 		// if mode does not have w, a, or +, it's open for read.
@@ -762,6 +765,7 @@ extern "C" {
 
 		return CALL(fopen64)( mpath, mode );
 	}
+#endif
 
 	WRAP(open, int, const char *pathname, int flags, mode_t mode)
 	{
@@ -770,13 +774,14 @@ extern "C" {
 		return CALL(open)( mpath, flags, mode );
 	}
 
+#ifndef ANDROID
 	WRAP(open64, int, const char *pathname, int flags, mode_t mode)
 	{
 		bool bAllowBasenameMismatch = ((flags & (O_WRONLY | O_RDWR)) != 0);
 		CWrap mpath( pathname, bAllowBasenameMismatch );
 		return CALL(open64)( mpath, flags, mode );
 	}
-
+#endif
 	int __wrap_creat(const char *pathname, mode_t mode)
 	{
 		return __wrap_open( pathname, O_CREAT|O_WRONLY|O_TRUNC, mode );
@@ -808,7 +813,7 @@ extern "C" {
 	{
 		return CALL(opendir)( CWrap( name, false ) );
 	}
-
+#ifndef ANDROID
     WRAP(__xstat, int, int __ver, __const char *__filename, struct stat *__stat_buf)
     {
         return CALL(__xstat)( __ver, CWrap( __filename, false), __stat_buf );
@@ -828,6 +833,7 @@ extern "C" {
     {
         return CALL(__lxstat64)( __ver, CWrap( __filename, false), __stat_buf );
     }
+#endif
 
 	WRAP(chmod, int, const char *path, mode_t mode)
 	{
@@ -871,10 +877,12 @@ extern "C" {
         return CALL(unlink)( CWrap( pathname, false ) );
 	}
 
+#ifndef ANDROID
 	WRAP(mkfifo, int, const char *pathname, mode_t mode)
 	{
         return CALL(mkfifo)( CWrap( pathname, true ), mode );
 	}
+#endif
 
 	WRAP(rename, int, const char *oldpath, const char *newpath)
 	{
