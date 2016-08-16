@@ -15,8 +15,14 @@
 #include "tier0/vprof_telemetry.h"
 
 // VProf is enabled by default in all configurations -except- X360 Retail.
-#if !( defined( _X360 ) && defined( _CERT ) )
+// Android doesn't support it tho
+#if !defined( _X360 ) || !defined( _CERT ) || !defined(ANDROID)
 #define VPROF_ENABLED
+#endif
+
+// HACK: I don't know who defines that, but we REALLY don't have VProf
+#if defined(ANDROID)
+#undef VPROF_ENABLED
 #endif
 
 #if defined(_X360) && defined(VPROF_ENABLED)
