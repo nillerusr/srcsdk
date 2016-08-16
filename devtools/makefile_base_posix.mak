@@ -54,7 +54,7 @@ else
 	CXXFLAGS = $(CFLAGS) -std=gnu++0x -fpermissive
 endif
 DEFINES += -DVPROF_LEVEL=1 -DGNUC -DNO_HOOK_MALLOC -DNO_MALLOC_OVERRIDE
-LDFLAGS = $(CFLAGS) $(GCC_ExtraLinkerFlags) $(OptimizerLevel)
+LDFLAGS = $(GCC_ExtraLinkerFlags) $(OptimizerLevel)
 GENDEP_CXXFLAGS = -MD -MP -MF $(@:.o=.P) 
 MAP_FLAGS =
 Srv_GAMEOUTPUTFILE = 
@@ -83,7 +83,7 @@ ifeq ($(OS),Linux)
 		LINK = $(shell ndk-which gcc)
 		STRIP = $(shell ndk-which strip)
 		CFLAGS += -march=armv7-a -mtune=cortex-a15 -mthumb -mfloat-abi=softfp -mfpu=neon -mcpu=cortex-a9 -pipe -mvectorize-with-neon-quad -fPIC
-		LDFLAGS += -march=armv7-a -mtune=cortex-a15 -mthumb -mfloat-abi=softfp -mfpu=neon -mcpu=cortex-a9 -pipe -mvectorize-with-neon-quad -fPIC -lm_hard -ldl -lgcc -no-canonical-prefixes -Wl,--fix-cortex-a8 -Wl,--no-warn-mismatch -Wl,--no-undefined -z,noexecstack -Wl,-z,relro -Wl,-z,now
+		LDFLAGS += -march=armv7-a -mtune=cortex-a15 -mthumb -mfloat-abi=softfp -mfpu=neon -mcpu=cortex-a9 -pipe -mvectorize-with-neon-quad -fPIC -no-canonical-prefixes -Wl,--fix-cortex-a8 -Wl,--no-warn-mismatch -Wl,--no-undefined -Wl,-z,noexecstack -Wl,-z,relro -Wl,-z,now
 	else # Already set for NDK
 		# Set USE_VALVE_BINDIR to build with /Steam/tools/linux in the /valve/bin path.
 		#  Dedicated server uses this.
@@ -179,7 +179,9 @@ ifeq ($(OS),Linux)
 		COPY_DLL_TO_SRV := 1
 	endif
 
-	LINK_MAP_FLAGS = -Wl,-Map,$(@:.so=).map
+	ifneq ($(NDK),1)
+		LINK_MAP_FLAGS = -Wl,-Map,$(@:.so=).map
+	endif
 
 	SHLIBLDFLAGS = -shared $(LDFLAGS) -Wl,--no-undefined
 
@@ -196,7 +198,9 @@ ifeq ($(OS),Linux)
 	ifeq ($(NDK),1)
 		#LIB_END_SHLIB = "-Wl,--end-group -L$(SYSROOT)/usr/lib -lm_hard -ldl -lz -landroid -lstdc++ -lc -llog -Wl,--version-script=$(SRCROOT)/devtools/version_script.linux.txt"
 		LIB_START_SHLIB = $(PATHWRAP) -Wl,--start-group
-		LIB_END_SHLIB := "-Wl,--end-group -lm -ldl $(LIBSTDCXXPIC) -lz -landroid -llog -Wl,--version-script=$(SRCROOT)/devtools/version_script.linux.txt"
+		LIB_END_SHLIB := -Wl,--end-group -L$(SYSROOT)/usr/lib -lm -ldl -lstdc++ -lz -landroid -llog -L$(SRCROOT)/lib/public/armeabi-v7a/ -landroidwrapper
+		LIBFILES += "$(NDK_PATH)/sources/cxx-stl/stlport/libs/armeabi-v7a-hard/thumb/libstlport_static.a"
+		LIBFILES += "$(SRCROOT)/lib/public/armeabi-v7a/libandroid_support.a"
 	else
 		LIB_START_SHLIB = $(PATHWRAP) -static-libgcc -Wl,--start-group
 		LIB_END_SHLIB := -Wl,--end-group -lm -ldl $(LIBSTDCXXPIC) -lpthread -l:$(LD_SO) -Wl,--version-script=$(SRCROOT)/devtools/version_script.linux.txt
@@ -363,9 +367,15 @@ ifeq ($(BUILDING_MULTI_ARCH),1)
 		$(CXX) $(SINGLE_ARCH_CXXFLAGS) $(GENDEP_CXXFLAGS) -o $@ -c $< && \
 		$(CXX) $(CXXFLAGS) -o $@ -c $<
 else
-	COMPILE_FILE = \
-		$(QUIET_PREFIX) echo "---- $(lastword $(subst /, ,$<)) ----: $(CXX) $(CXXFLAGS) $(GENDEP_CXXFLAGS) -o $@ -c $<";\
-		mkdir -p $(OBJ_DIR) && $(CXX) $(CXXFLAGS) $(GENDEP_CXXFLAGS) -o $@ -c $<
+	ifeq ($(NDK_VERBOSE),1)
+		COMPILE_FILE = \
+			$(QUIET_PREFIX) echo "---- $(lastword $(subst /, ,$<)) ----: $(CXX) $(CXXFLAGS) $(GENDEP_CXXFLAGS) -o $@ -c $<";\
+			mkdir -p $(OBJ_DIR) && $(CXX) $(CXXFLAGS) $(GENDEP_CXXFLAGS) -o $@ -c $<
+	else
+		COMPILE_FILE = \
+			$(QUIET_PREFIX) echo "---- $(lastword $(subst /, ,$<)) ----";\
+			mkdir -p $(OBJ_DIR) && $(CXX) $(CXXFLAGS) $(GENDEP_CXXFLAGS) -o $@ -c $<
+	endif
 endif
 
 ifneq "$(origin VALVE_NO_AUTO_P4)" "undefined"
