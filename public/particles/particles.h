@@ -662,7 +662,7 @@ public:
 									int nNumBlocks,
 									CParticleCollection *pParticles,
 									void *pContext, 
-									int nNumValidParticlesInLastChunk ) const
+									int nNumValidParticlesInLastChunk = 0 ) const
 	{
 		return false;
 	}
@@ -922,6 +922,9 @@ struct ParticleRenderData_t
 	uint8 m_nAlphaPad[3];										// this will be written to
 	uint8 m_nAlpha;							// effective alpha, combining alpha and alpha2 and vis. 0 - 255
 #endif
+
+	int m_nPass2SortKey;
+	void *m_pSample;	
 };
 
 struct ExtendedParticleRenderData_t : ParticleRenderData_t
@@ -1163,7 +1166,7 @@ public:
 	Vector TransformAxis( const Vector &SrcAxis, bool bLocalSpace, int nControlPointNumber = 0);
 
 	// return backwards-sorted particle list. use --addressing
-	const ParticleRenderData_t *GetRenderList( IMatRenderContext *pRenderContext, bool bSorted, int *pNparticles, CParticleVisibilityData *pVisibilityData );
+	const ParticleRenderData_t *GetRenderList( IMatRenderContext *pRenderContext, bool bSorted, int *pNparticles, CParticleVisibilityData *pVisibilityData = NULL );
 
 	// calculate the points of a curve for a path
 	void CalculatePathValues( CPathParameters const &PathIn,
@@ -1200,7 +1203,7 @@ protected:
 	void BloatBoundsUsingControlPoint();
 
 private:
-	void GenerateSortedIndexList( Vector vecCameraPos, CParticleVisibilityData *pVisibilityData, bool bSorted );
+	void GenerateSortedIndexList( Vector vecCameraPos, CParticleVisibilityData *pVisibilityData = NULL, bool bSorted = false );
 
 	void Init( CParticleSystemDefinition *pDef, float flDelay, int nRandomSeed );
 	void InitStorage( CParticleSystemDefinition *pDef );
