@@ -15,6 +15,15 @@
 #include "xbox/xbox_console.h"
 #endif
 
+#ifdef ANDROID
+#include <android/log.h>
+#define TAG "SourceSDK2013"
+#define PRIO ANDROID_LOG_DEBUG
+#define android_printf(...) __android_log_print(PRIO, TAG, __VA_ARGS__)
+#else
+#define android_printf(...) 
+#endif
+
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
@@ -111,11 +120,19 @@ IGameSystemPerFrame::~IGameSystemPerFrame()
 //-----------------------------------------------------------------------------
 void IGameSystem::Add( IGameSystem* pSys )
 {
-	s_GameSystems.AddToTail( pSys );
-	if ( dynamic_cast< IGameSystemPerFrame * >( pSys ) != NULL )
+	if( !pSys )
 	{
-		s_GameSystemsPerFrame.AddToTail( static_cast< IGameSystemPerFrame * >( pSys ) );
+		android_printf("Add: Passed a NULL IGameSystem!");
 	}
+	
+	android_printf("Adding to list(%i): %s", s_GameSystems.Count(), pSys->Name() );
+	s_GameSystems.AddToTail( pSys );
+	
+	/*if ( dynamic_cast< IGameSystemPerFrame * >( pSys ) != NULL )
+	{
+		android_printf("Add Per Frame: %s", pSys->Name() );
+		s_GameSystemsPerFrame.AddToTail( static_cast< IGameSystemPerFrame * >( pSys ) );
+	}*/
 }
 
 
@@ -212,15 +229,17 @@ bool IGameSystem::InitAllSystems()
 
 		IGameSystem *sys = s_GameSystems[i];
 
-#if defined( _X360 )
 		char sz[128];
 		Q_snprintf( sz, sizeof( sz ), "%s->Init():Start", sys->Name() );
+		android_printf( sz );
+#if defined( _X360 )
 		XBX_rTimeStampLog( Plat_FloatTime(), sz );
 #endif
 		bool valid = sys->Init();
 
-#if defined( _X360 )
 		Q_snprintf( sz, sizeof( sz ), "%s->Init():Finish", sys->Name() );
+		android_printf( sz );
+#if defined( _X360 )
 		XBX_rTimeStampLog( Plat_FloatTime(), sz );
 #endif
 		if ( !valid )
