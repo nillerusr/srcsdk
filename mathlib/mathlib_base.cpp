@@ -3306,6 +3306,28 @@ void MathLib_Init( float gamma, float texGamma, float brightness, int overbright
 
 	// FIXME: Hook SSE into VectorAligned + Vector4DAligned
 
+#if defined(ANDROID)
+	s_b3DNowEnabled = bAllow3DNow = false;
+	s_bSSEEnabled = bAllowSSE = false;
+	s_bSSE2Enabled = bAllowSSE2 = false;
+	s_bMMXEnabled = bAllowMMX = false;
+	
+	// Select the default generic routines.
+	pfSqrt = _sqrtf;
+	pfRSqrt = _rsqrtf;
+	pfRSqrtFast = _rsqrtf;
+	pfVectorNormalize = _VectorNormalize;
+	pfVectorNormalizeFast = _VectorNormalizeFast;
+	pfInvRSquared = _InvRSquared;
+	pfFastSinCos = SinCos;
+	pfFastCos = cosf;
+
+	s_bMathlibInitialized = true;
+
+	InitSinCosTable();
+	BuildGammaTable( gamma, texGamma, brightness, overbright );
+#else
+	
 #if !defined( _X360 )
 	// Grab the processor information:
 	const CPUInformation& pi = *GetCPUInformation();
@@ -3393,7 +3415,8 @@ void MathLib_Init( float gamma, float texGamma, float brightness, int overbright
 	s_bMathlibInitialized = true;
 
 	InitSinCosTable();
-	BuildGammaTable( gamma, texGamma, brightness, overbright );
+	BuildGammaTable( gamma, texGamma, brightness, overbright )
+#endif // ANDROID
 }
 
 bool MathLib_3DNowEnabled( void )
