@@ -51,7 +51,7 @@ CFLAGS = $(ARCH_FLAGS) $(CPPFLAGS) $(WARN_FLAGS) -fvisibility=$(SymbolVisibility
 ifeq ($(CXX),clang++)
 	CXXFLAGS = $(CFLAGS) -std=gnu++0x -Wno-c++11-narrowing -Wno-dangling-else
 else
-	CXXFLAGS = $(CFLAGS) -std=gnu++0x -fpermissive
+	CXXFLAGS = $(CFLAGS) -std=gnu++0x -fpermissive -Wno-narrowing -fsigned-char
 endif
 DEFINES += -DVPROF_LEVEL=1 -DGNUC -DNO_HOOK_MALLOC -DNO_MALLOC_OVERRIDE
 LDFLAGS = $(GCC_ExtraLinkerFlags) $(OptimizerLevel)
@@ -198,7 +198,7 @@ ifeq ($(OS),Linux)
 	ifeq ($(NDK),1)
 		#LIB_END_SHLIB = "-Wl,--end-group -L$(SYSROOT)/usr/lib -lm_hard -ldl -lz -landroid -lstdc++ -lc -llog -Wl,--version-script=$(SRCROOT)/devtools/version_script.linux.txt"
 		LIB_START_SHLIB = $(PATHWRAP) -Wl,--start-group
-		LIB_END_SHLIB := -Wl,--end-group -L$(SYSROOT)/usr/lib -lm -ldl -lstdc++ -lz -landroid -llog -L$(SRCROOT)/lib/public/armeabi-v7a/ -landroidwrapper
+		LIB_END_SHLIB := -Wl,--end-group -L$(SYSROOT)/usr/lib -lm -ldl -lz -landroid -llog -L$(SRCROOT)/lib/public/armeabi-v7a/ -landroidwrapper
 		LIBFILES += "$(NDK_PATH)/sources/cxx-stl/stlport/libs/armeabi-v7a-hard/thumb/libstlport_static.a"
 		LIBFILES += "$(SRCROOT)/lib/public/armeabi-v7a/libandroid_support.a"
 	else
