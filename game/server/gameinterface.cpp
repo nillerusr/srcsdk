@@ -90,6 +90,14 @@
 #include "serverbenchmark_base.h"
 #include "querycache.h"
 
+#ifdef ANDROID
+#include <android/log.h>
+#define TAG "SourceSDK2013"
+#define PRIO ANDROID_LOG_DEBUG
+#define android_printf(...) __android_log_print(PRIO, TAG, __VA_ARGS__)
+#else
+#define android_printf(...) 
+#endif
 
 #ifdef TF_DLL
 #include "gc_clientsystem.h"
@@ -569,8 +577,11 @@ bool CServerGameDLL::DLLInit( CreateInterfaceFn appSystemFactory,
 		CreateInterfaceFn physicsFactory, CreateInterfaceFn fileSystemFactory, 
 		CGlobalVars *pGlobals)
 {
+	android_printf("Connecting Tier1...");
 	ConnectTier1Libraries( &appSystemFactory, 1 );
+	android_printf("Connecting Tier2...");
 	ConnectTier2Libraries( &appSystemFactory, 1 );
+	android_printf("Connecting Tier3...");
 	ConnectTier3Libraries( &appSystemFactory, 1 );
 
 	// Connected in ConnectTier1Libraries
@@ -643,6 +654,7 @@ bool CServerGameDLL::DLLInit( CreateInterfaceFn appSystemFactory,
 	g_pSharedChangeInfo = engine->GetSharedEdictChangeInfo();
 	
 	MathLib_Init( 2.2f, 2.2f, 0.0f, 2.0f );
+	android_printf("MathLib_Init()... successful!");
 
 	// save these in case other system inits need them
 	factorylist_t factories;
@@ -660,12 +672,17 @@ bool CServerGameDLL::DLLInit( CreateInterfaceFn appSystemFactory,
 	// Initialize the particle system
 	if ( !g_pParticleSystemMgr->Init( g_pParticleSystemQuery ) )
 	{
+		android_printf("PARTICLES FAILED!!!!");
 		return false;
 	}
 
+	android_printf("g_pCVar->FindVar( \"sv_cheats\" )");
 	sv_cheats = g_pCVar->FindVar( "sv_cheats" );
 	if ( !sv_cheats )
+	{
+		android_printf("failed");
 		return false;
+	}
 
 	g_pcv_commentary = g_pCVar->FindVar( "commentary" );
 	g_pcv_ThreadMode = g_pCVar->FindVar( "host_thread_mode" );
@@ -673,6 +690,7 @@ bool CServerGameDLL::DLLInit( CreateInterfaceFn appSystemFactory,
 
 	sv_maxreplay = g_pCVar->FindVar( "sv_maxreplay" );
 
+	android_printf("AddBlockHandlers...");
 	g_pGameSaveRestoreBlockSet->AddBlockHandler( GetEntitySaveRestoreBlockHandler() );
 	g_pGameSaveRestoreBlockSet->AddBlockHandler( GetPhysSaveRestoreBlockHandler() );
 	g_pGameSaveRestoreBlockSet->AddBlockHandler( GetAISaveRestoreBlockHandler() );
@@ -681,6 +699,7 @@ bool CServerGameDLL::DLLInit( CreateInterfaceFn appSystemFactory,
 	g_pGameSaveRestoreBlockSet->AddBlockHandler( GetCommentarySaveRestoreBlockHandler() );
 	g_pGameSaveRestoreBlockSet->AddBlockHandler( GetEventQueueSaveRestoreBlockHandler() );
 	g_pGameSaveRestoreBlockSet->AddBlockHandler( GetAchievementSaveRestoreBlockHandler() );
+	android_printf("successful...");
 
 	// The string system must init first + shutdown last
 	IGameSystem::Add( GameStringSystem() );
@@ -707,6 +726,7 @@ bool CServerGameDLL::DLLInit( CreateInterfaceFn appSystemFactory,
 	InstallBotControl();
 #endif
 
+	android_printf("IGameSystem::InitAllSystems()...");
 	if ( !IGameSystem::InitAllSystems() )
 		return false;
 
@@ -719,17 +739,22 @@ bool CServerGameDLL::DLLInit( CreateInterfaceFn appSystemFactory,
 #endif
 
 	// Due to dependencies, these are not autogamesystems
+	android_printf("ModelSoundsCacheInit...");
 	if ( !ModelSoundsCacheInit() )
 	{
+		android_printf("failed...");
 		return false;
 	}
 
+	android_printf("InvalidateQueryCache...");
 	InvalidateQueryCache();
 
 	// Parse the particle manifest file & register the effects within it
+	android_printf("ParseParticleEffects...");
 	ParseParticleEffects( false, false );
 
 	// try to get debug overlay, may be NULL if on HLDS
+	android_printf("get debug overlay...");
 	debugoverlay = (IVDebugOverlay *)appSystemFactory( VDEBUG_OVERLAY_INTERFACE_VERSION, NULL );
 
 #ifndef _XBOX
@@ -739,9 +764,11 @@ bool CServerGameDLL::DLLInit( CreateInterfaceFn appSystemFactory,
 #endif
 
 	// init the gamestatsupload connection
+	android_printf("gamestatsuploader...");
 	gamestatsuploader->InitConnection();
 #endif
 
+	android_printf("DLLInit() finished!");
 	return true;
 }
 
@@ -3437,4 +3464,12 @@ CSteamID GetSteamIDForPlayerIndex( int iPlayerIndex )
 	return CSteamID();
 }
 
+#endif
+
+#ifdef ANDROID
+void ANDROID_ON_DLOPEN() __attribute__((constructor));
+void ANDROID_ON_DLOPEN()
+{
+	android_printf("server.so dlopened!");
+}
 #endif

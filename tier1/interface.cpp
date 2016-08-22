@@ -36,6 +36,14 @@
 #include "xbox/xbox_win32stubs.h"
 #endif
 
+#ifdef ANDROID
+#include <android/log.h>
+#define TAG "SourceSDK2013"
+#define PRIO ANDROID_LOG_DEBUG
+#define android_printf(...) __android_log_print(PRIO, TAG, __VA_ARGS__)
+#else
+#define android_printf(...) 
+#endif
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -68,6 +76,8 @@ InterfaceReg::InterfaceReg( InstantiateInterfaceFn fn, const char *pName ) :
 void* CreateInterfaceInternal( const char *pName, int *pReturnCode )
 {
 	InterfaceReg *pCur;
+	
+	android_printf("Requested Interface: %s", pName);
 	
 	for (pCur=InterfaceReg::s_pInterfaceRegs; pCur; pCur=pCur->m_pNext)
 	{
@@ -242,9 +252,11 @@ HMODULE Sys_LoadLibrary( const char *pLibraryName, Sys_Flags flags )
 #elif POSIX
 	int dlopen_mode = RTLD_NOW;
 
+#ifndef ANDROID
 	if ( flags & SYS_NOLOAD )
 		dlopen_mode |= RTLD_NOLOAD;
-
+#endif
+	
 	HMODULE ret = ( HMODULE )dlopen( str, dlopen_mode );
 	if ( !ret && !( flags & SYS_NOLOAD ) )
 	{
