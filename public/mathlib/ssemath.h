@@ -17,7 +17,9 @@
 #include <mathlib/vector.h>
 #include <mathlib/mathlib.h>
 
-#if defined(GNUC)
+#if defined(GNUC) && defined(__arm__) // HACK: implement NEON later
+#define USE_STDC_FOR_SIMD 1
+#elif defined(GNUC)
 #define USE_STDC_FOR_SIMD 0
 #else
 #define USE_STDC_FOR_SIMD 0
