@@ -22,6 +22,7 @@
 #ifdef POSIX
 #include <pthread.h>
 #include <errno.h>
+#include <sched.h>
 #define WAIT_OBJECT_0 0
 #define WAIT_TIMEOUT 0x00000102
 #define WAIT_FAILED -1
@@ -102,6 +103,12 @@ extern "C" unsigned long __declspec(dllimport) __stdcall GetCurrentThreadId();
 #define ThreadGetCurrentId GetCurrentThreadId
 #endif
 
+#ifdef __arm__
+#define MODEATTRIB __attribute__((target("arm")))
+#else
+#define MODEATTRIB
+#endif
+
 inline void ThreadPause()
 {
 #if defined( PLATFORM_WINDOWS_PC )
@@ -110,7 +117,7 @@ inline void ThreadPause()
 #elif defined( __i386__ ) && defined(POSIX)
 	__asm __volatile( "pause" );
 #elif defined(__arm__)
-	__asm __volatile( "YIELD" ); // maybe work. Maybe not. Who knows?
+	sched_yield(); // maybe work. Maybe not. Who knows?
 #elif defined( _X360 )
 #error "implement me"
 #endif
