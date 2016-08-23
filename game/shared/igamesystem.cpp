@@ -124,15 +124,15 @@ void IGameSystem::Add( IGameSystem* pSys )
 	{
 		android_printf("Add: Passed a NULL IGameSystem!");
 	}
-	
+
 	android_printf("Adding to list(%i): %s", s_GameSystems.Count(), pSys->Name() );
 	s_GameSystems.AddToTail( pSys );
-	
-	/*if ( dynamic_cast< IGameSystemPerFrame * >( pSys ) != NULL )
+
+	if ( dynamic_cast< IGameSystemPerFrame * >( pSys ) != NULL )
 	{
 		android_printf("Add Per Frame: %s", pSys->Name() );
 		s_GameSystemsPerFrame.AddToTail( static_cast< IGameSystemPerFrame * >( pSys ) );
-	}*/
+	}
 }
 
 
@@ -165,6 +165,7 @@ char const*	IGameSystem::MapName()
 {
 	return s_pMapName;
 }
+
 
 #ifndef CLIENT_DLL
 CBasePlayer *IGameSystem::RunCommandPlayer()
