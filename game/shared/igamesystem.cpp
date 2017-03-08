@@ -14,6 +14,7 @@
 #if defined( _X360 )
 #include "xbox/xbox_console.h"
 #endif
+#include <typeinfo>
 
 #ifdef ANDROID
 #include <android/log.h>
@@ -127,12 +128,20 @@ void IGameSystem::Add( IGameSystem* pSys )
 
 	android_printf("Adding to list(%i): %s", s_GameSystems.Count(), pSys->Name() );
 	s_GameSystems.AddToTail( pSys );
-
+	
+#if 1
+	if( pSys->IsPerFrame() )
+	{
+		android_printf("Add Per Frame: %s", pSys->Name() );
+		s_GameSystemsPerFrame.AddToTail( static_cast< IGameSystemPerFrame * >( pSys ) );
+	}
+#else
 	if ( dynamic_cast< IGameSystemPerFrame * >( pSys ) != NULL )
 	{
 		android_printf("Add Per Frame: %s", pSys->Name() );
 		s_GameSystemsPerFrame.AddToTail( static_cast< IGameSystemPerFrame * >( pSys ) );
 	}
+#endif
 }
 
 
@@ -142,10 +151,17 @@ void IGameSystem::Add( IGameSystem* pSys )
 void IGameSystem::Remove( IGameSystem* pSys )
 {
 	s_GameSystems.FindAndRemove( pSys );
+#if 1
+	if( pSys->IsPerFrame() )
+	{
+		s_GameSystemsPerFrame.FindAndRemove( static_cast< IGameSystemPerFrame * >( pSys ) );
+	}
+#else
 	if ( dynamic_cast< IGameSystemPerFrame * >( pSys ) != NULL )
 	{
 		s_GameSystemsPerFrame.FindAndRemove( static_cast< IGameSystemPerFrame * >( pSys ) );
 	}
+#endif
 }
 
 //-----------------------------------------------------------------------------

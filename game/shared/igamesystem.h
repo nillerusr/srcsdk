@@ -55,7 +55,7 @@ public:
 	// Called every frame. It's safe to remove an igamesystem from within this callback.
 	virtual void SafeRemoveIfDesired() = 0;
 
-	virtual bool	IsPerFrame() = 0;
+	virtual bool IsPerFrame() { return false; }
 
 	// destructor, cleans up automagically....
 	virtual ~IGameSystem();
@@ -105,6 +105,8 @@ class IGameSystemPerFrame : public IGameSystem
 public:
 	// destructor, cleans up automagically....
 	virtual ~IGameSystemPerFrame();
+	
+	virtual bool IsPerFrame() { return true; }
 
 #ifdef CLIENT_DLL
 	// Called before rendering
@@ -148,8 +150,6 @@ public:
 	virtual void OnSave() {}
 	virtual void OnRestore() {}
 	virtual void SafeRemoveIfDesired() {}
-
-	virtual bool	IsPerFrame() { return false; }
 private:
 
 	// Prevent anyone derived from CBaseGameSystem from implementing these, they need
@@ -195,9 +195,6 @@ public:
 	virtual void OnSave() {}
 	virtual void OnRestore() {}
 	virtual void SafeRemoveIfDesired() {}
-
-	virtual bool	IsPerFrame() { return true; }
-
 #ifdef CLIENT_DLL
 	// Called before rendering
 	virtual void PreRender () { }
