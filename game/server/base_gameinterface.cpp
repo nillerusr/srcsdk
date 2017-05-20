@@ -15,6 +15,7 @@ void CServerGameClients::GetPlayerLimits( int& minplayers, int& maxplayers, int 
 {
 	minplayers = defaultMaxPlayers = 1; 
 	maxplayers = MAX_PLAYERS;
+	DevMsg("GetPlayerLimits() = minplayers %i, maxplayers %i, defaultMaxPlayers %i\n", minplayers, maxplayers, defaultMaxPlayers);
 }
 
 

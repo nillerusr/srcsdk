@@ -404,12 +404,14 @@ DBG_INTERFACE void DWarning( const tchar *pGroupName, int level, PRINTF_FORMAT_S
 DBG_INTERFACE void Log( PRINTF_FORMAT_STRING const tchar *pMsg, ... ) FMTFUNCTION( 1, 2 );
 DBG_INTERFACE void DLog( const tchar *pGroupName, int level, PRINTF_FORMAT_STRING const tchar *pMsg, ... ) FMTFUNCTION( 3, 4 );
 
+#ifndef ANDROID
 #ifdef Error
 // p4.cpp does a #define Error Warning and in that case the Error prototype needs to
 // be consistent with the Warning prototype.
 DBG_INTERFACE void Error( PRINTF_FORMAT_STRING const tchar *pMsg, ... ) FMTFUNCTION( 1, 2 );
 #else
 DBG_INTERFACE void NORETURN Error( PRINTF_FORMAT_STRING const tchar *pMsg, ... ) FMTFUNCTION( 1, 2 );
+#endif
 #endif
 
 #else
@@ -441,6 +443,7 @@ inline void Error( ... ) {}
 
 /* A couple of super-common dynamic spew messages, here for convenience */
 /* These looked at the "developer" group */
+
 DBG_INTERFACE void DevMsg( int level, PRINTF_FORMAT_STRING const tchar* pMsg, ... ) FMTFUNCTION( 2, 3 );
 DBG_INTERFACE void DevWarning( int level, PRINTF_FORMAT_STRING const tchar *pMsg, ... ) FMTFUNCTION( 2, 3 );
 DBG_INTERFACE void DevLog( int level, PRINTF_FORMAT_STRING const tchar *pMsg, ... ) FMTFUNCTION( 2, 3 );
@@ -474,6 +477,63 @@ DBG_INTERFACE void NetWarning( int level, PRINTF_FORMAT_STRING const tchar *pMsg
 DBG_INTERFACE void NetLog( int level, PRINTF_FORMAT_STRING const tchar *pMsg, ... ) FMTFUNCTION( 2, 3 );
 
 void ValidateSpew( class CValidator &validator );
+
+#ifdef ANDROID
+#include <android/log.h>
+#define TAG "SourceSDK2013"
+#define PRIO ANDROID_LOG_DEBUG
+#define android_printf(...) __android_log_print(PRIO, TAG, __VA_ARGS__)
+inline void __DevMsg( int level, PRINTF_FORMAT_STRING const tchar* pMsg, ... )
+{
+	va_list arg_ptr;
+	va_start(arg_ptr, pMsg);
+	__android_log_vprint(PRIO, TAG, pMsg, arg_ptr );
+	va_end(arg_ptr);
+}
+
+inline void __DevMsg( PRINTF_FORMAT_STRING const tchar* pMsg, ... )
+{
+	va_list arg_ptr;
+	va_start(arg_ptr, pMsg);
+	__android_log_vprint( PRIO, TAG, pMsg, arg_ptr );
+	va_end(arg_ptr);
+}
+
+inline void Error( PRINTF_FORMAT_STRING const tchar* pMsg, ... )
+{
+	va_list arg_ptr;
+	va_start(arg_ptr, pMsg);
+	__android_log_vprint( ANDROID_LOG_ERROR, TAG, pMsg, arg_ptr );
+	va_end(arg_ptr);
+}
+
+inline void Log( PRINTF_FORMAT_STRING const tchar* pMsg, ... )
+{
+	va_list arg_ptr;
+	va_start(arg_ptr, pMsg);
+	__android_log_vprint( ANDROID_LOG_VERBOSE, TAG, pMsg, arg_ptr );
+	va_end(arg_ptr);
+}
+
+#define DevMsg __DevMsg
+#define DevWarning __DevMsg
+#define DevLog __DevMsg
+#define ConMsg __DevMsg
+#define ConLog __DevMsg
+#define NetMsg __DevMsg
+#define NetWarning __DevMsg
+#define NetLog __DevMsg
+
+#define Msg __DevMsg
+#define DMsg __DevMsg
+#define Warning __DevMsg
+#define DWarning __DevMsg
+#define DLog __DevMsg
+
+
+#else
+#define android_printf(...) 
+#endif
 
 #else
 

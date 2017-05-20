@@ -10,6 +10,8 @@
 #include "utlhashtable.h"
 #ifndef GC
 #include "igamesystem.h"
+#else
+#error "Broken RTTI"
 #endif
 #include "gamestringpool.h"
 
@@ -20,6 +22,7 @@
 // Purpose: The actual storage for pooled per-level strings
 //-----------------------------------------------------------------------------
 #ifdef GC
+#error "Broken RTTI"
 class CGameStringPool
 #else
 class CGameStringPool : public CBaseGameSystem
@@ -99,6 +102,8 @@ IGameSystem *GameStringSystem()
 {
 	return &g_GameStringPool;
 }
+#else
+#error "Broken RTTI"
 #endif
 
 

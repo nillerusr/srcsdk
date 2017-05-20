@@ -573,6 +573,11 @@ EXPOSE_SINGLE_INTERFACE_GLOBALVAR(CServerGameDLL, IServerGameDLL, INTERFACEVERSI
 // When bumping the version to this interface, check that our assumption is still valid and expose the older version in the same way
 COMPILE_TIME_ASSERT( INTERFACEVERSION_SERVERGAMEDLL_INT == 9 );
 
+CON_COMMAND( dllinit_finished, "" )
+{
+	android_printf("DLLInit::Finished");
+}
+
 bool CServerGameDLL::DLLInit( CreateInterfaceFn appSystemFactory, 
 		CreateInterfaceFn physicsFactory, CreateInterfaceFn fileSystemFactory, 
 		CGlobalVars *pGlobals)
@@ -769,6 +774,8 @@ bool CServerGameDLL::DLLInit( CreateInterfaceFn appSystemFactory,
 #endif
 
 	android_printf("DLLInit() finished!");
+	
+	engine->ServerCommand("dllinit_finished");
 	return true;
 }
 
@@ -872,12 +879,15 @@ float CServerGameDLL::GetTickInterval( void ) const
 	}
 #endif
 
+	android_printf("GetTickInterval() = %f", tickinterval);
+
 	return tickinterval;
 }
 
 // This is called when a new game is started. (restart, map)
 bool CServerGameDLL::GameInit( void )
 {
+	android_printf("GameInit()");
 	ResetGlobalState();
 	engine->ServerCommand( "exec game.cfg\n" );
 	engine->ServerExecute( );
@@ -979,6 +989,7 @@ bool CServerGameDLL::IsRestoring()
 bool CServerGameDLL::LevelInit( const char *pMapName, char const *pMapEntities, char const *pOldLevel, char const *pLandmarkName, bool loadGame, bool background )
 {
 	VPROF("CServerGameDLL::LevelInit");
+	android_printf("CServerGameDLL::LevelInit");
 
 #ifdef USES_ECON_ITEMS
 	GameItemSchema_t *pItemSchema = ItemSystem()->GetItemSchema();
@@ -1437,12 +1448,16 @@ void CServerGameDLL::LevelShutdown( void )
 //-----------------------------------------------------------------------------
 ServerClass* CServerGameDLL::GetAllServerClasses()
 {
+	android_printf("GetAllServerClasses()");
+	
 	return g_pServerClassHead;
 }
 
 
 const char *CServerGameDLL::GetGameDescription( void )
 {
+	android_printf("GetGameDescription() = %s", ::GetGameDescription() );
+	
 	return ::GetGameDescription();
 }
 
