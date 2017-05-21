@@ -310,7 +310,7 @@ ifeq ($(NDK),1)
 	# Replace and update
 	ARFLAGS = "ru"
 	LIBFILES := $(subst linux32,armeabi-v7a,$(LIBFILES))
-	#LIBFILENAMES := $(subst linux32,armeabi-v7a,$(LIBFILENAMES))
+	LIBFILENAMES := $(subst linux32,armeabi-v7a,$(LIBFILENAMES))
 else
 	OBJ_DIR = ./obj_$(NAME)_$(TARGET_PLATFORM)$(TARGET_PLATFORM_EXT)/$(CFG)
 	ARFLAGS = ""

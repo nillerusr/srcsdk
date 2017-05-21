@@ -1,0 +1,32 @@
+$Macro SRCDIR		"..\..\"
+$Macro IS_LIB_PROJECT "1"
+$Include "$SRCDIR\vpc_scripts\source_dll_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories	"$BASE;$SRCDIR\public\tier2;$SRCDIR\public\;$SRCDIR\public\vinterface_wrapper"
+	}
+}
+
+$Project "vinterface_cdll_wrap"
+{
+	$Folder	"Source Files"
+	{
+		$File	"cdll_int.cpp"
+	}
+
+	$Folder	"Public Header Files"
+	{
+		$File	"$SRCDIR\public\vinterface_wrapper\wrapper.h"
+		$File	"$SRCDIR\public\tier1\interface.h"
+		$File	"$SRCDIR\public\tier1\utlvector.h"
+	}
+	
+	$Folder "Link Libraries"
+	{
+		$Lib	"vinterface_wrapper"
+	}
+}
+ 

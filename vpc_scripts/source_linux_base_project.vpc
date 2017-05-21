@@ -1,6 +1,6 @@
 
 $Include "$SRCDIR\vpc_scripts\version.vpc"
-$Macro PLATSUBDIR	"\linux32"	[$LINUX32]
+$Macro PLATSUBDIR	"\armeabi-v7a"	[$LINUX32]
 
 $Macro LIBPUBLIC	"$SRCDIR\lib\public$PLATSUBDIR"
 $Macro LIBCOMMON	"$SRCDIR\lib\common$PLATSUBDIR"

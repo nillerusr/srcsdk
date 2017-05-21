@@ -136,3 +136,38 @@ $Project "choreoobjects"
 	"choreoobjects\choreoobjects.vpc"
 }
 
+$Project "tier2"
+{
+	"tier2/tier2.vpc"
+}
+
+$Project "tier3"
+{
+	"tier3/tier3.vpc"
+}
+
+$Project "particles"
+{
+	"particles/particles.vpc"
+}
+
+$Project "dmxloader"
+{
+	"dmxloader/dmxloader.vpc"
+}
+
+$Project "vinterface_wrapper"
+{
+	"vinterface_wrapper/vinterface_wrapper.vpc"
+}
+
+$Project "vinterface_cdll_wrap"
+{
+	"vinterface_wrapper/client/vinterface_cdll_wrap.vpc"
+}
+
+$Project "vinterface_vgui_wrap"
+{
+	"vinterface_wrapper/vgui/vinterface_vgui_wrap.vpc"
+}
+

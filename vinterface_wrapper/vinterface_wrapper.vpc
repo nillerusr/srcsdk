@@ -1,0 +1,25 @@
+$Macro SRCDIR		".."
+$Include "$SRCDIR\vpc_scripts\source_lib_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories	"$BASE;$SRCDIR\public\tier2;$SRCDIR\public\;$SRCDIR\public\vinterface_wrapper"
+	}
+}
+
+$Project "vinterface_wrapper"
+{
+	$Folder	"Source Files"
+	{
+		$File	"wrapper.cpp"
+	}
+
+	$Folder	"Public Header Files"
+	{
+		$File	"$SRCDIR\public\vinterface_wrapper\wrapper.h"
+		$File	"$SRCDIR\public\tier1\interface.h"
+		$File	"$SRCDIR\public\tier1\utlvector.h"
+	}
+}
