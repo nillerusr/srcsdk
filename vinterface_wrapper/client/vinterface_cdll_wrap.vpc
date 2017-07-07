@@ -6,7 +6,7 @@ $Configuration
 {
 	$Compiler
 	{
-		$AdditionalIncludeDirectories	"$BASE;$SRCDIR\public\tier2;$SRCDIR\public\;$SRCDIR\public\vinterface_wrapper"
+		$AdditionalIncludeDirectories	"$BASE;$SRCDIR\public\tier2;$SRCDIR\public\;$SRCDIR\vinterface_wrapper;$SRCDIR\thirdparty"
 	}
 }
 
@@ -15,13 +15,7 @@ $Project "vinterface_cdll_wrap"
 	$Folder	"Source Files"
 	{
 		$File	"cdll_int.cpp"
-	}
-
-	$Folder	"Public Header Files"
-	{
-		$File	"$SRCDIR\public\vinterface_wrapper\wrapper.h"
-		$File	"$SRCDIR\public\tier1\interface.h"
-		$File	"$SRCDIR\public\tier1\utlvector.h"
+		$File	"consoledisplay.cpp"
 	}
 	
 	$Folder "Link Libraries"

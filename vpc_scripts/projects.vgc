@@ -171,3 +171,12 @@ $Project "vinterface_vgui_wrap"
 	"vinterface_wrapper/vgui/vinterface_vgui_wrap.vpc"
 }
 
+$Project "tierhook"
+{
+	"vinterface_wrapper/tierhook/tierhook.vpc"
+}
+
+$Project "first"
+{
+	"vinterface_wrapper/first/first.vpc"
+}

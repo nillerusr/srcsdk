@@ -14,13 +14,19 @@ Please, don't punish, Mr. Newell. :)
 #include "IGameUIFuncs.h"
 #include "filesystem.h"
 
+
+void SDLWrap_Init( Module *sdl2 )
+{
+	LogPrintf( "SDLWrap_Init" );
+}
+
 IBaseClientDLL *realClientDLL;
 // we don't provide own full implementation of VClient017, so we need wrap it
 // we also provide ourselves as "libclient.so", so real library was moved to "libclient_original.so"
-GET_INTERFACE_PTR( "libclient_original.so", CLIENT_DLL_INTERFACE_VERSION, &realClientDLL );
+GET_INTERFACE_PTR( Client, "libclient_original.so", CLIENT_DLL_INTERFACE_VERSION, &realClientDLL );
 
 // event catching
-WRAP_LIBRARY( SDL2, "libSDL2.so" );
+WRAP_LIBRARY( SDL2, "libSDL2.so", SDLWrap_Init );
 
 // this is required when wrapping client for some reason
 WRAP_MODULE( GameUI, "libGameUI.so" ); 
@@ -46,6 +52,11 @@ public:
 			return false;
 		if ( (inputsystem = (IInputSystem *)appSystemFactory(INPUTSYSTEM_INTERFACE_VERSION, NULL)) == NULL )
 			return false;
+		
+		LogPrintf( "Hello from CWrapClient. Running on %s, ver. %i", engine->GetProductVersionString(), engine->GetEngineBuildNumber() );
+		engine->ClientCmd("echo Meow");
+		engine->ClientCmd("con_enable 1");
+		engine->ClientCmd("developer 1");
 		
 		
 		return realClientDLL->Init( appSystemFactory, physicsFactory, pGlobals );

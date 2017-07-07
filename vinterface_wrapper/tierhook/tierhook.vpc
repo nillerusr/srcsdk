@@ -6,16 +6,17 @@ $Configuration
 {
 	$Compiler
 	{
-		$AdditionalIncludeDirectories	"$BASE;$SRCDIR\public\tier2;$SRCDIR\public\;$SRCDIR\vinterface_wrapper"
+		$AdditionalIncludeDirectories	"$BASE;..\"
 	}
 }
 
-$Project "vinterface_vgui_wrap"
+$Project "tierhook"
 {
 	$Folder	"Source Files"
 	{
+		$File	"tier0_hacks.cpp"
 	}
-
+	
 	$Folder "Link Libraries"
 	{
 		$Lib	"vinterface_wrapper"

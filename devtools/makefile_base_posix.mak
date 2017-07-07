@@ -45,13 +45,13 @@ endif
 
 BUILDING_MULTI_ARCH = 0
 CPPFLAGS = $(DEFINES) $(addprefix -I, $(abspath $(INCLUDEDIRS) ))
-CFLAGS = $(ARCH_FLAGS) $(CPPFLAGS) $(WARN_FLAGS) -fvisibility=$(SymbolVisibility) $(OptimizerLevel) -pipe $(GCC_ExtraCompilerFlags) -Usprintf -Ustrncpy -UPROTECTED_THINGS_ENABLE
+CFLAGS = $(ARCH_FLAGS) $(CPPFLAGS) $(WARN_CFLAGS) -fvisibility=$(SymbolVisibility) $(OptimizerLevel) -pipe $(GCC_ExtraCompilerFlags) -Usprintf -Ustrncpy -UPROTECTED_THINGS_ENABLE -fsigned-char
 # In -std=gnu++0x mode we get lots of errors about "error: narrowing conversion". -fpermissive
 # turns these into warnings in gcc, and -Wno-c++11-narrowing suppresses them entirely in clang 3.1+.
 ifeq ($(CXX),clang++)
-	CXXFLAGS = $(CFLAGS) -std=gnu++0x -Wno-c++11-narrowing -Wno-dangling-else
+	CXXFLAGS = $(CFLAGS) $(WARN_CXXFLAGS) -std=gnu++0x -Wno-c++11-narrowing -Wno-dangling-else
 else
-	CXXFLAGS = $(CFLAGS) -std=gnu++0x -fpermissive -Wno-narrowing -fsigned-char
+	CXXFLAGS = $(CFLAGS) $(WARN_CXXFLAGS) -std=gnu++0x -fpermissive -Wno-narrowing 
 endif
 DEFINES += -DVPROF_LEVEL=1 -DGNUC -DNO_HOOK_MALLOC -DNO_MALLOC_OVERRIDE
 LDFLAGS = $(GCC_ExtraLinkerFlags) $(OptimizerLevel)
@@ -62,12 +62,20 @@ COPY_DLL_TO_SRV = 0
 
 
 ifeq ($(STEAM_BRANCH),1)
-	WARN_FLAGS = -Wall -Wextra -Wshadow -Wno-invalid-offsetof
+	WARN_CFLAGS = -Wall -Wextra -Wshadow -Wno-invalid-offsetof
 else
-	WARN_FLAGS = -Wno-write-strings -Wno-multichar
+	WARN_CFLAGS = 
 endif
 
-WARN_FLAGS += -Wno-unknown-pragmas -Wno-unused-parameter -Wno-unused-value -Wno-missing-field-initializers -Wno-sign-compare -Wno-reorder -Wno-invalid-offsetof -Wno-float-equal -Werror=return-type -fdiagnostics-show-option -Wformat -Wformat-security
+WARN_CFLAGS += -Wno-unknown-pragmas -Wno-unused-parameter -Wno-unused-value -Wno-missing-field-initializers -Wno-sign-compare -Wno-float-equal -Werror=return-type -fdiagnostics-show-option -Wformat -Wformat-security
+
+ifeq ($(STEAM_BRANCH),1)
+	WARN_CFLAGS = -Wall -Wextra -Wshadow
+else
+	WARN_CFLAGS = -Wno-write-strings -Wno-multichar
+endif
+
+WARN_CXXFLAGS += $(WARN_CFLAGS) -Wno-reorder -Wno-invalid-offsetof 
 
 
 ifeq ($(OS),Linux)
@@ -80,7 +88,7 @@ ifeq ($(OS),Linux)
 		CXX = $(shell ndk-which g++)
 		LD = $(shell ndk-which ld)
 		AR = $(shell ndk-which ar)
-		LINK = $(shell ndk-which gcc)
+		LINK = $(shell ndk-which g++)
 		STRIP = $(shell ndk-which strip)
 		CFLAGS += -march=armv7-a -mtune=cortex-a15 -mthumb -mfloat-abi=softfp -mfpu=neon -mcpu=cortex-a9 -pipe -mvectorize-with-neon-quad -fPIC
 		LDFLAGS += -march=armv7-a -mtune=cortex-a15 -mthumb -mfloat-abi=softfp -mfpu=neon -mcpu=cortex-a9 -pipe -mvectorize-with-neon-quad -fPIC -no-canonical-prefixes -Wl,--fix-cortex-a8 -Wl,--no-warn-mismatch -Wl,--no-undefined -Wl,-z,noexecstack -Wl,-z,relro -Wl,-z,now
@@ -198,7 +206,7 @@ ifeq ($(OS),Linux)
 	ifeq ($(NDK),1)
 		#LIB_END_SHLIB = "-Wl,--end-group -L$(SYSROOT)/usr/lib -lm_hard -ldl -lz -landroid -lstdc++ -lc -llog -Wl,--version-script=$(SRCROOT)/devtools/version_script.linux.txt"
 		LIB_START_SHLIB = $(PATHWRAP) -Wl,--start-group
-		LIB_END_SHLIB := -Wl,--end-group -L$(SYSROOT)/usr/lib -lm -ldl -lz -landroid -llog -L$(SRCROOT)/lib/public/armeabi-v7a/ -landroidwrapper
+		LIB_END_SHLIB := -Wl,--end-group -L$(SYSROOT)/usr/lib -lm -ldl -lz -landroid -llog
 		LIBFILES += "$(NDK_PATH)/sources/cxx-stl/stlport/libs/armeabi-v7a-hard/thumb/libstlport_static.a"
 		LIBFILES += "$(SRCROOT)/lib/public/armeabi-v7a/libandroid_support.a"
 	else
@@ -369,8 +377,8 @@ ifeq ($(BUILDING_MULTI_ARCH),1)
 else
 	ifeq ($(NDK_VERBOSE),1)
 		COMPILE_FILE = \
-			$(QUIET_PREFIX) echo "---- $(lastword $(subst /, ,$<)) ----: $(CXX) $(CXXFLAGS) $(GENDEP_CXXFLAGS) -o $@ -c $<";\
-			mkdir -p $(OBJ_DIR) && $(CXX) $(CXXFLAGS) $(GENDEP_CXXFLAGS) -o $@ -c $<
+			$(QUIET_PREFIX) echo "---- $(lastword $(subst /, ,$<)) ----: $(if $(streq $(suffix $(lastword $(subst /, ,$<))), ".cpp"),$(CXX) $(CXXFLAGS),$(CC) $(CFLAGS))  -o $@ -c $<";\
+			mkdir -p $(OBJ_DIR) && $(if $(streq $(suffix $(lastword $(subst /, ,$<))), ".cpp"),$(CXX) $(CXXFLAGS),$(CC) $(CFLAGS)) $(GENDEP_CXXFLAGS) -o $@ -c $<
 	else
 		COMPILE_FILE = \
 			$(QUIET_PREFIX) echo "---- $(lastword $(subst /, ,$<)) ----";\
@@ -379,7 +387,11 @@ else
 endif
 
 ifneq "$(origin VALVE_NO_AUTO_P4)" "undefined"
-	P4_EDIT_START = chmod -R +w
+	ifeq ($(NDK),1)
+		P4_EDIT_START = true
+	else
+		P4_EDIT_START = chmod -R +w
+	endif
 	P4_EDIT_END = || true
 	P4_REVERT_START = true
 	P4_REVERT_END =
@@ -509,8 +521,8 @@ $(SO_GameOutputFile): $(SO_File)
 	$(QUIET_PREFIX) -mkdir -p `dirname $(GAMEOUTPUTFILE)` > /dev/null;
 	$(QUIET_PREFIX) rm -f $(GAMEOUTPUTFILE) $(QUIET_ECHO_POSTFIX);
 	$(QUIET_PREFIX) cp -v $(OUTPUTFILE) $(GAMEOUTPUTFILE) $(QUIET_ECHO_POSTFIX);
-	$(QUIET_PREFIX) -$(P4_EDIT_START) $(GAMEOUTPUTFILE)$(SYM_EXT) $(P4_EDIT_END);
 	$(QUIET_PREFIX) $(GEN_SYM) $(GAMEOUTPUTFILE); 
+	$(QUIET_PREFIX) -$(P4_EDIT_START) $(GAMEOUTPUTFILE)$(SYM_EXT) $(P4_EDIT_END);
 	$(QUIET_PREFIX) -$(STRIP) $(GAMEOUTPUTFILE);
 	$(QUIET_PREFIX) $(VSIGN) -signvalve $(GAMEOUTPUTFILE);
 	$(QUIET_PREFIX) if [ "$(COPY_DLL_TO_SRV)" = "1" ]; then\
