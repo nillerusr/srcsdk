@@ -10,6 +10,7 @@ as published by Sam Hocevar. See http://www.wtfpl.net/ for more details.
 #if defined(ANDROID) && defined(__arm__)
 #include <sys/mman.h>
 #include <string.h>
+#include <dlfcn.h>
 #include "funutils.h"
 
 //#define PAGE_SIZE 4096UL
@@ -29,6 +30,7 @@ struct soinfo
 void simple_hook( void *dst, void *func, void *srcBackup )
 {
 	unsigned char n_code[HIJACK_SIZE];
+	int offset = 0;
 	
 	if( ((unsigned long)dst & 3) == 0 )
 	{
@@ -42,10 +44,10 @@ void simple_hook( void *dst, void *func, void *srcBackup )
         // add r0, pc, #4; ldr r0, [r0, #0]; mov pc, r0; mov pc, r0; .long addr
         memcpy(n_code, "\x01\xa0\x00\x68\x87\x46\x87\x46\x00\x00\x00\x00", HIJACK_SIZE);
         *(unsigned long *)&n_code[8] = (unsigned long)func;
-        dst--;
+        offset = -1;
     }
     
-    fun_rewrite( dst, n_code, HIJACK_SIZE, srcBackup );
+    fun_rewrite( (char*)dst + offset, n_code, HIJACK_SIZE, srcBackup );
 }
 
 void *dl_offset_sym( const void *handle, size_t offset )
@@ -116,7 +118,7 @@ int fun_rewrite( void *dst, const void *src, const size_t bytes, void *srcBackup
 	}
 	
 	size_t size_of_page;
-	char *start_page = calc_page( dst, bytes, &size_of_page );
+	char *start_page = (char*)calc_page( dst, bytes, &size_of_page );
 	
 	// Call mprotect, so dst memory will be writable
 	if( mprotect_shortcut( start_page, size_of_page, PROT_READ | PROT_WRITE | PROT_EXEC, 1 ) ) // This will succeeded only if dst was allocated by mmap().

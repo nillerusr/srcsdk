@@ -36,6 +36,13 @@ void *dl_rel_offset_sym( const void *handle, const char *sym, const ptrdiff_t of
 // !!! This function require mprotect()
 int fun_rewrite( void *dst, const void *src, const size_t bytes, void *srcBackup );
 
+// Rewrite vtable located in dst by vtable located in src
+// Entries filled with __cxa_pure_virtual are ignored and will not be written to dst
+size_t vtable_rewrite( void **dst, void **src );
+
+inline void **get_vtable( void *classptr ) { return *(void***)classptr; }
+
+
 // TODO: vtable hook
 
 #ifdef __cplusplus
