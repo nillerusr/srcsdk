@@ -139,6 +139,13 @@ public:
 	private:
 		ICVarIteratorInternal *m_pIter;
 	};
+	
+	
+	// HACK to call protected method from wrapped class
+	static void *call_FactoryInternalIterator( ICvar *o )
+	{
+		return (void*)o->FactoryInternalIterator();
+	}
 
 protected:
 	// internals for  ICVarIterator
