@@ -156,6 +156,11 @@ $Project "dmxloader"
 	"dmxloader/dmxloader.vpc"
 }
 
+$Project "gameui"
+{
+	"gameui/GameUI.vpc"
+}
+
 $Project "vinterface_wrapper"
 {
 	"vinterface_wrapper/vinterface_wrapper.vpc"
@@ -169,6 +174,11 @@ $Project "vinterface_cdll_wrap"
 $Project "vinterface_vgui_wrap"
 {
 	"vinterface_wrapper/vgui/vinterface_vgui_wrap.vpc"
+}
+
+$Project "vinterface_gameui_wrap"
+{
+	"vinterface_wrapper/gameui/vinterface_gameui_wrap.vpc"
 }
 
 $Project "tierhook"

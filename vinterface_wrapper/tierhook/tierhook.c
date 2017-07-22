@@ -45,13 +45,3 @@ int _NewSpewMessage( int type, const char *fmt, va_list ap )
 {
 }
 
-JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* x)
-{
-	// offset seems to be correct in 23-44
-	simple_hook( DefaultSpewFunc + 0x50, _NewSpewMessage );
-
-	// force enable text input (no need in SDL patching now)
-	SDL_StartTextInput();
-
-	return JNI_VERSION_1_4;
-}

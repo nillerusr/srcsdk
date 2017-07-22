@@ -1,0 +1,27 @@
+$Macro SRCDIR		"..\..\"
+$Macro IS_LIB_PROJECT "1"
+$Include "$SRCDIR\vpc_scripts\source_dll_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories	"$BASE;$SRCDIR\public\tier2;$SRCDIR\public\;$SRCDIR\vinterface_wrapper;$SRCDIR\thirdparty;$SRCDIR\common\GameUI\"
+	}
+}
+
+$Project "vinterface_gameui_wrap"
+{
+	$Folder	"Source Files"
+	{
+		$File	"gameui.cpp"
+	}
+	
+	$Folder "Link Libraries"
+	{
+		$Lib	"vinterface_wrapper"
+		$Lib	"tier1"
+		$ImpLib "tier0"
+	}
+}
+ 

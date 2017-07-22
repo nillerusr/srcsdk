@@ -9,6 +9,7 @@ Licensed under WTFPL License
 #include <sys/mman.h>
 #include <errno.h>
 #include <stdarg.h>
+#include "jni.h"
 #include "funutils.h"
 #include "wrapper.h"
 // #include "wrap_cmdline.h"
@@ -17,15 +18,16 @@ Licensed under WTFPL License
 // #define SPEW_MESSAGE 0x00008E60
 
 static void *spewFunc;
-static void *DefaultSpewFunc;
 static unsigned char spewFunc_old[HIJACK_SIZE];
 
-void *(*GetSpewOutputFunc)();
-void (*SDL_StartTextInput)();
+typedef void *(*GetSpewOutputFunc_t)();
+GetSpewOutputFunc_t GetSpewOutputFunc;
+
+typedef void (*SDL_StartTextInput_t)();
+SDL_StartTextInput_t SDL_StartTextInput;
 
 typedef int (*SpewFunc)( int, char* );
-
-static int meow, meow2;
+SpewFunc DefaultSpewFunc;
 
 int Tier0_SpewMessage( int type, const char *msg, va_list arg )
 {	
@@ -59,17 +61,14 @@ void TestPrint( const char *msg, ... )
 void Tier0_Hack_Init( Module *tier0 )
 {
 	const void *handle = tier0->GetHandle();
-	static int meow, meow2; // trampolines don't have NULL checks
 	
 	spewFunc = dl_rel_offset_sym( handle, "DefaultSpewFunc", SPEW_MESSAGE_OFFSET );
-	DefaultSpewFunc = tier0->Resolve("DefaultSpewFunc");
-	GetSpewOutputFunc = (void*(*)())tier0->Resolve( "GetSpewOutputFunc" );	
+	DefaultSpewFunc = (SpewFunc)tier0->Resolve("DefaultSpewFunc");
+	GetSpewOutputFunc = (GetSpewOutputFunc_t)tier0->Resolve( "GetSpewOutputFunc" );	
 	
+	// any calls leads to hack
 	simple_hook( spewFunc, (void*)Tier0_SpewMessage, spewFunc_old );
-	
-	// fun_rewrite( spewFunc, (const void*)spewFunc_new, TRAMP_LENGTH, spewFunc_old );
-	// fun_rewrite( commandLineFunc, (const void*)commandLineFunc_new, TRAMP_LENGTH, commandLineFunc_old );
-	
+		
 	TestPrint( "You should see this in console. If not, contact any magician." );
 }
 
@@ -80,10 +79,18 @@ void Tier0_Hack_Free( Module *tier0 )
 
 void SDLWrap_Init( Module *SDL )
 {
-	SDL_StartTextInput = (void(*)())SDL->Resolve( "SDL_StartTextInput" );
+	SDL_StartTextInput = (SDL_StartTextInput_t)SDL->Resolve( "SDL_StartTextInput" );
 	
 	SDL_StartTextInput();
 }
 
 WRAP_LIBRARY( Tier0, "libtier0.so", Tier0_Hack_Init, Tier0_Hack_Free );
-WRAP_LIBRARY( SDL, "libSDL.so", SDLWrap_Init );
+WRAP_LIBRARY( SDL, "libSDL2.so", SDLWrap_Init );
+
+JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* x)
+{
+	// initialize everything. tierhook is not a module, so CreateInterface will never be called on it here
+	g_Loader.LoadAllLibraries(); 
+	return JNI_VERSION_1_4;
+}
+

@@ -6,7 +6,7 @@ $Configuration
 {
 	$Compiler
 	{
-		$AdditionalIncludeDirectories	"$BASE;$SRCDIR\public\tier2;$SRCDIR\public\;$SRCDIR\vinterface_wrapper;$SRCDIR\thirdparty"
+		$AdditionalIncludeDirectories	"$BASE;$SRCDIR\public\tier2;$SRCDIR\public\;$SRCDIR\vinterface_wrapper;$SRCDIR\thirdparty;$SRCDIR\common\GameUI"
 	}
 }
 
@@ -15,12 +15,18 @@ $Project "vinterface_cdll_wrap"
 	$Folder	"Source Files"
 	{
 		$File	"cdll_int.cpp"
+		$File	"gameui.cpp"
+		$File	"touch.cpp"
 		$File	"consoledisplay.cpp"
+		$File	"jni.cpp"
 	}
 	
 	$Folder "Link Libraries"
 	{
 		$Lib	"vinterface_wrapper"
+		$Lib	"tier1"
+		$ImpLib	"tier0"
+		//$ImpLib "pthread"
 	}
 }
  

@@ -14,7 +14,8 @@ $Project "vinterface_wrapper"
 	$Folder	"Source Files"
 	{
 		$File	"wrapper.cpp"
-		$File	"funutils.c"
+		// $File	"shared/cvar.cpp"
+		$File	"funutils.cpp"
 	}
 
 	$Folder	"Public Header Files"

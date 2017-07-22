@@ -71,6 +71,7 @@ $Group "hacks"
 	"vinterface_wrapper"
 	"vinterface_cdll_wrap"
 	"vinterface_vgui_wrap"
+	"vinterface_gameui_wrap"
 	"tierhook"
 	"first"
 }

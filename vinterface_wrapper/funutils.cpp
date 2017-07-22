@@ -62,11 +62,48 @@ void *dl_rel_offset_sym( const void *handle, const char *sym, const ptrdiff_t of
 	return (void*)(base + offset);
 }
 
-int fun_rewrite( void *dst, const void *src, const size_t bytes, void *srcBackup )
+void *calc_page( void *dst, const size_t bytes, size_t *size_of_page )
+{
+	void *start_page;
+	
+	// Calculate page for mprotect
+	start_page = (void*)(PAGE_ALIGN( dst ) - PAGE_SIZE);
+	
+	if( size_of_page )
+	{
+		if( (size_t)((char*)dst + bytes) > PAGE_ALIGN( dst ) )
+		{
+			// bytes are located on two pages
+			*size_of_page = PAGE_SIZE*2;
+		}
+		else
+		{
+			// bytes are located entirely on one page.
+			*size_of_page = PAGE_SIZE;
+		}
+	}
+}
+
+int mprotect_shortcut( void *dst, const size_t bytes, int prot, int aligned = 0 )
 {
 	void *start_page;
 	size_t size_of_page;
 	
+	if( !aligned )
+	{
+		start_page = calc_page( dst, bytes, &size_of_page );
+	}
+	else
+	{
+		start_page = dst;
+		size_of_page = bytes;
+	}
+		
+	return mprotect( start_page, size_of_page, prot );
+}
+
+int fun_rewrite( void *dst, const void *src, const size_t bytes, void *srcBackup )
+{
 	if( !( dst && src && bytes ) )
 	{
 		return -1;
@@ -78,22 +115,11 @@ int fun_rewrite( void *dst, const void *src, const size_t bytes, void *srcBackup
 		memcpy( srcBackup, src, bytes );
 	}
 	
-	// Calculate page for mprotect
-	start_page = (void*)(PAGE_ALIGN( dst ) - PAGE_SIZE);
-
-	if( (size_t)((char*)dst + bytes) > PAGE_ALIGN( dst ) )
-	{
-		// bytes are located on two pages
-		size_of_page = PAGE_SIZE*2;
-	}
-	else
-	{
-		// bytes are located entirely on one page.
-		size_of_page = PAGE_SIZE;
-	}
+	size_t size_of_page;
+	char *start_page = calc_page( dst, bytes, &size_of_page );
 	
 	// Call mprotect, so dst memory will be writable
-	if( mprotect( start_page, size_of_page, PROT_READ | PROT_WRITE | PROT_EXEC ) ) // This will succeeded only if dst was allocated by mmap().
+	if( mprotect_shortcut( start_page, size_of_page, PROT_READ | PROT_WRITE | PROT_EXEC, 1 ) ) // This will succeeded only if dst was allocated by mmap().
 	{
 		return -1; 
 	}
@@ -102,16 +128,42 @@ int fun_rewrite( void *dst, const void *src, const size_t bytes, void *srcBackup
 	memcpy( dst, src, bytes );
 	
 	// just in case
-	if( mprotect( start_page, size_of_page, PROT_READ | PROT_EXEC ) )
+	if( mprotect_shortcut( start_page, size_of_page, PROT_READ | PROT_EXEC, 1 ) )
 	{
 		return -1;
 	}
 	
 	// clear instruction caches
-	__clear_cache( (char*)start_page, (char*)start_page + size_of_page );
-	
+	__clear_cache( start_page, start_page + size_of_page );
+		
 	return 0;	
 }
+
+extern "C" void __cxa_pure_virtual( void ); // link with libstdc++
+
+size_t vtable_rewrite( void **dst, void **src )
+{
+	size_t i = 0;
+	size_t size = 0;
+	
+	for( void **i = dst; *i; size++, i++ );
+	
+	if( mprotect_shortcut( dst, size, PROT_READ | PROT_WRITE | PROT_EXEC ) ) // This will succeeded only if dst was allocated by mmap().
+	{
+		return -1; 
+	}
+	
+	for( ; *src && *dst; i++, src++, dst++ )
+	{
+		if( *src == __cxa_pure_virtual )
+			continue;
+		
+		*dst = *src;
+	}
+	
+    return i;
+}
+
 #else
 
 #error "Port me!"
