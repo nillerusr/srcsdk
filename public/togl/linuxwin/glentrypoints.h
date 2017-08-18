@@ -12,7 +12,6 @@
 #ifdef DX_TO_GL_ABSTRACTION
 
 #include "tier0/platform.h"
-#include "tier0/dynfunction.h"
 #include "tier0/vprof_telemetry.h"
 #include "interface.h"
 
@@ -277,7 +276,6 @@ public:
 	~COpenGLEntryPoints();
 
 	void ClearEntryPoints();
-
 	uint64 m_nTotalGLCycles, m_nTotalGLCalls;
 
 	int m_nOpenGLVersionMajor;  // if GL_VERSION is 2.1.0, this will be set to 2.
@@ -288,20 +286,26 @@ public:
 	char *m_pGLDriverStrings[cGLTotalDriverStrings];
 	GLDriverProvider_t m_nDriverProvider;		
 
-	#define GL_EXT(x,glmajor,glminor) bool m_bHave_##x;
-	#define GL_FUNC(ext,req,ret,fn,arg,call) CDynamicFunctionOpenGL< req, ret (APIENTRY *) arg, ret > fn;
-	#define GL_FUNC_VOID(ext,req,fn,arg,call) CDynamicFunctionOpenGL< req, void (APIENTRY *) arg, void > fn;
+#ifdef OSX
+#define GL_EXT(x,glmajor,glminor) bool m_bHave_##x;
+#define GL_FUNC(ext,req,ret,fn,arg,call) CDynamicFunctionOpenGL< req, ret (*) arg, ret > fn;
+#define GL_FUNC_VOID(ext,req,fn,arg,call) CDynamicFunctionOpenGL< req, void (*) arg, void > fn;
+#else
+#define GL_EXT(x,glmajor,glminor) bool m_bHave_##x;
+#define GL_FUNC(ext,req,ret,fn,arg,call) CDynamicFunctionOpenGL< req, ret (APIENTRY *) arg, ret > fn;
+#define GL_FUNC_VOID(ext,req,fn,arg,call) CDynamicFunctionOpenGL< req, void (APIENTRY *) arg, void > fn;
+#endif
 	#include "togl/glfuncs.inl"
 	#undef GL_FUNC_VOID
 	#undef GL_FUNC
 	#undef GL_EXT
-		
+
 	bool HasSwapTearExtension() const
 	{
 #ifdef _WIN32
-		return m_bHave_WGL_EXT_swap_control_tear;
+	return m_bHave_WGL_EXT_swap_control_tear;
 #else
-		return m_bHave_GLX_EXT_swap_control_tear;
+	return m_bHave_GLX_EXT_swap_control_tear;
 #endif
 	}
 };

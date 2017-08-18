@@ -39,6 +39,7 @@ GL_FUNC_VOID(OpenGL,true,glDisable,(GLenum a),(a))
 GL_FUNC_VOID(OpenGL,true,glDisableVertexAttribArray,(GLuint a),(a))
 GL_FUNC_VOID(OpenGL,true,glDrawArrays,(GLenum a,GLint b,GLsizei c),(a,b,c))
 GL_FUNC_VOID(OpenGL,true,glDrawBuffer,(GLenum a),(a))
+GL_FUNC_VOID(OpenGL,true,glDrawBuffers,(GLsizei a,const GLenum *b),(a,b))
 GL_FUNC_VOID(OpenGL,true,glDrawRangeElements,(GLenum a,GLuint b,GLuint c,GLsizei d,GLenum e,const GLvoid *f),(a,b,c,d,e,f))
 GL_FUNC_VOID(OpenGL,true,glDrawRangeElementsBaseVertex,(GLenum a,GLuint b,GLuint c,GLsizei d,GLenum e,const GLvoid *f, GLenum g),(a,b,c,d,e,f,g))
 GL_FUNC_VOID(OpenGL,true,glEnable,(GLenum a),(a))
@@ -185,7 +186,11 @@ GL_FUNC_VOID(GL_ARB_framebuffer_object,false,glRenderbufferStorageMultisample,(G
 GL_EXT(GL_GREMEDY_string_marker,-1,-1)
 GL_FUNC_VOID(GL_GREMEDY_string_marker,false,glStringMarkerGREMEDY,(GLsizei a,const void *b),(a,b))
 GL_EXT(GL_ARB_debug_output,-1,-1)
+#ifdef OSX
+GL_FUNC_VOID(GL_ARB_debug_output,false,glDebugMessageCallbackARB,(void ( *a)(GLenum, GLenum , GLuint , GLenum , GLsizei , const GLchar* , GLvoid*) ,void* b),(a,b))
+#else
 GL_FUNC_VOID(GL_ARB_debug_output,false,glDebugMessageCallbackARB,(void (APIENTRY *a)(GLenum, GLenum , GLuint , GLenum , GLsizei , const GLchar* , GLvoid*) ,void* b),(a,b))
+#endif
 GL_FUNC_VOID(GL_ARB_debug_output,false,glDebugMessageControlARB,(GLenum a, GLenum b, GLenum c, GLsizei d, const GLuint* e, GLboolean f),(a,b,c,d,e,f))
 GL_EXT(GL_EXT_direct_state_access,-1,-1)
 GL_FUNC_VOID(GL_EXT_direct_state_access,false,glBindMultiTextureEXT,(GLenum a,GLuint b, GLuint c),(a,b,c))

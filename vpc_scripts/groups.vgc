@@ -74,4 +74,5 @@ $Group "hacks"
 	"vinterface_gameui_wrap"
 	"tierhook"
 	"first"
+	"togl"
 }

@@ -8,10 +8,9 @@
 
 #include <GL/gl.h>
 #include <GL/glext.h>
+
 #include "tier0/basetypes.h"
 #include "tier0/platform.h"
-
-#if defined(LINUX) || defined(_WIN32)
 
 #include "togl/linuxwin/glmdebug.h"
 #include "togl/linuxwin/glbase.h"
@@ -28,25 +27,6 @@
 #include "togl/linuxwin/glmgr.h"
 #include "togl/linuxwin/dxabstract_types.h"
 #include "togl/linuxwin/dxabstract.h"
-
-#elif defined(OSX)
-#include "togl/osx/glmdebug.h"
-//#include "togl/osx/glbase.h"
-#include "togl/osx/glentrypoints.h"
-#include "togl/osx/glmdisplay.h"
-#include "togl/osx/glmdisplaydb.h"
-#include "togl/osx/glmgrbasics.h"
-#include "togl/osx/glmgrext.h"
-#include "togl/osx/cglmbuffer.h"
-#include "togl/osx/cglmtex.h"
-#include "togl/osx/cglmfbo.h"
-#include "togl/osx/cglmprogram.h"
-#include "togl/osx/cglmquery.h"
-#include "togl/osx/glmgr.h"
-#include "togl/osx/dxabstract_types.h"
-#include "togl/osx/dxabstract.h"
-
-#endif
 
 #else
 	//USE_ACTUAL_DX

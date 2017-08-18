@@ -331,7 +331,7 @@ DBG_INTERFACE struct SDL_Window * GetAssertDialogParent();
 // Assert is used to detect an important but survivable error.
 // It's only turned on when DBGFLAG_ASSERT is true.
 
-#ifdef DBGFLAG_ASSERT
+#if 0
 
 #define  Assert( _exp )           							_AssertMsg( _exp, _T("Assertion Failed: ") _T(#_exp), ((void)0), false )
 #define  AssertMsg( _exp, _msg, ... )  						_AssertMsg( _exp, (const tchar *)CDbgFmtMsg( _msg, ##__VA_ARGS__ ), ((void)0), false )

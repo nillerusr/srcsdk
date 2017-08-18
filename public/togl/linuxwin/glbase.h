@@ -11,24 +11,15 @@
 
 #undef HAVE_GL_ARB_SYNC
 
-#ifndef OSX
-	#define HAVE_GL_ARB_SYNC 1
+#define HAVE_GL_ARB_SYNC 1
+
+#ifdef USE_SDL
+#include "SDL_opengl.h"
 #endif
 
 #ifdef OSX
-	#include <OpenGL/OpenGL.h>
-	#include <OpenGL/gl.h>
-	#include <OpenGL/glext.h>
-	#include <OpenGL/CGLTypes.h>
-	#include <OpenGL/CGLRenderers.h>
-	#include <OpenGL/CGLCurrent.h>
-	#include <OpenGL/CGLProfiler.h>
-	#include <ApplicationServices/ApplicationServices.h>
-#elif defined(DX_TO_GL_ABSTRACTION)
-	#include <GL/gl.h>
-	#include <GL/glext.h>
-#else
-	#error
+#include <OpenGL/CGLCurrent.h>
+#include <ApplicationServices/ApplicationServices.h>
 #endif
 
 #ifdef DX_TO_GL_ABSTRACTION
@@ -37,20 +28,18 @@
 	#endif
 	#undef CurrentTime
 
-	// prevent some conflicts in SDL headers...
-	#undef M_PI
-	#include <stdint.h>
-	#ifndef _STDINT_H_
-	#define _STDINT_H_ 1
+	#if defined( USE_SDL )
+		#include "SDL.h"
 	#endif
 #endif
 
 //===============================================================================
 // glue to call out to Obj-C land (these are in glmgrcocoa.mm)
 #ifdef OSX
-	bool			NewNSGLContext( unsigned long *attribs, PseudoNSGLContextPtr nsglShareCtx, PseudoNSGLContextPtr *nsglCtxOut, CGLContextObj *cglCtxOut );
+	typedef void _PseudoNSGLContext;					// aka NSOpenGLContext
+	typedef _PseudoNSGLContext	*PseudoNSGLContextPtr;
+	
 	CGLContextObj	GetCGLContextFromNSGL( PseudoNSGLContextPtr nsglCtx );
-	void			DelNSGLContext( PseudoNSGLContextPtr nsglCtx );
 #endif
 
 // Set TOGL_SUPPORT_NULL_DEVICE to 1 to support the NULL ref device

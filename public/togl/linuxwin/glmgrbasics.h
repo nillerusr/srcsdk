@@ -10,20 +10,16 @@
 
 #pragma once
 
+#ifdef USE_SDL
+#include "SDL_opengl.h"
+#endif
+
 #ifdef OSX
-	#include <OpenGL/OpenGL.h>
-	#include <OpenGL/gl.h>
-	#include <OpenGL/glext.h>
 	#include <OpenGL/CGLTypes.h>
 	#include <OpenGL/CGLRenderers.h>
 	#include <OpenGL/CGLCurrent.h>
 	#include <OpenGL/CGLProfiler.h>
 	#include <ApplicationServices/ApplicationServices.h>
-#elif defined(DX_TO_GL_ABSTRACTION)
-	#include <GL/gl.h>
-	#include <GL/glext.h>
-#else
-	#error
 #endif
 
 #include "tier0/platform.h"

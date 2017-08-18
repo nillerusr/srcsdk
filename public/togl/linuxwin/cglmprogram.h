@@ -145,6 +145,9 @@ public:
 
 	uint					m_samplerMask;			// (1<<n) mask of sampler active locs, if this is a fragment shader (dxabstract sets this field)
 	uint					m_samplerTypes;			// SAMPLER_2D, etc.
+	uint					m_fragDataMask;			// (1<<n) mask of gl_FragData[n] outputs referenced, if this is a fragment shader (dxabstract sets this field)
+	uint					m_numDrawBuffers;		// number of draw buffers used
+	GLenum					m_drawBuffers[4];		// GL_COLOR_ATTACHMENT0_EXT1, etc
 	uint					m_nNumUsedSamplers;
 	uint					m_maxSamplers;
 	uint					m_maxVertexAttrs;
@@ -199,10 +202,10 @@ public:
 		
 		m_nScreenWidthHeight = nWidthHeight;
 
-		uint nWidth = nWidthHeight & 0xFFFF, nHeight = nWidthHeight >> 16;
+		float fWidth = (float)( nWidthHeight & 0xFFFF ), fHeight = (float)( nWidthHeight >> 16 );
 		// Apply half pixel offset to output vertices to account for the pixel center difference between D3D9 and OpenGL.
 		// We output vertices in clip space, which ranges from [-1,1], so 1.0/width in clip space transforms into .5/width in screenspace, see: "Viewports and Clipping (Direct3D 9)" in the DXSDK
-		float v[4] = { 1.0f / nWidth, 1.0f / nHeight, nWidth, nHeight };
+		float v[4] = { 1.0f / fWidth, 1.0f / fHeight, fWidth, fHeight };
 		if ( m_locVertexScreenParams >= 0 )
 			gGL->glUniform4fv( m_locVertexScreenParams, 1, v );
 	}
@@ -227,10 +230,10 @@ public:
 	GLint					m_locVertexBoneParams;	// "vcbones"
 	GLint					m_locVertexInteger0;	// "i0"
 			
-	GLint					m_locVertexBool0;		// "b0"
-	GLint					m_locVertexBool1;		// "b1"
-	GLint					m_locVertexBool2;		// "b2"
-	GLint					m_locVertexBool3;		// "b3"
+	enum { cMaxVertexShaderBoolUniforms = 4, cMaxFragmentShaderBoolUniforms = 1 };
+
+	GLint					m_locVertexBool[cMaxVertexShaderBoolUniforms];		// "b0", etc.
+	GLint					m_locFragmentBool[cMaxFragmentShaderBoolUniforms];		// "fb0", etc.
 	bool					m_bHasBoolOrIntUniforms;
 			
 	// fragment stage uniforms
@@ -243,7 +246,7 @@ public:
 	float					m_fakeSRGBEnableValue;			// shadow to avoid redundant sets of the m_locFragmentFakeSRGBEnable uniform
 		// init it to -1.0 at link or relink, so it will trip on any legit incoming value (0.0 or 1.0)
 
-	GLint					m_locSamplers[ 16 ];			// "sampler0 ... sampler1..."
+	GLint					m_locSamplers[ GLM_SAMPLER_COUNT ];			// "sampler0 ... sampler1..."
 
 	// other stuff
 	bool					m_valid;				// true on successful link

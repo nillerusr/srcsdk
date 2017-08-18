@@ -11,7 +11,7 @@
 #pragma once
 
 #ifdef OSX
-#include "glmgr/glmgrbasics.h"
+#include "glmgrbasics.h"
 #endif
 #include "tier1/utlhash.h"
 #include "tier1/utlmap.h"
@@ -199,6 +199,8 @@ struct GLMTexLockDesc
 
 #define	GLM_SAMPLER_COUNT	16
 
+#define GLM_MAX_PIXEL_TEX_SAMPLERS	16
+#define GLM_MAX_VERTEX_TEX_SAMPLERS	0
 typedef CBitVec<GLM_SAMPLER_COUNT> CTexBindMask;
 
 enum EGLMTexSliceFlag
@@ -263,6 +265,7 @@ struct GLMTexSamplingParams
 		m_packed.m_magFilter = D3DTEXF_POINT;
 		m_packed.m_mipFilter = D3DTEXF_NONE;
 		m_packed.m_maxAniso = 1;
+		m_packed.m_compareMode = 0;
 		m_packed.m_isValid = true;
 	}
 
@@ -377,7 +380,7 @@ struct GLMTexSamplingParams
 		}
 	}
 
-	inline void SetToTargetTexture( GLenum target )
+	inline void SetToTarget( GLenum target )
 	{
 		static const GLenum dxtogl_addressMode[] = { GL_REPEAT, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_BORDER, (GLenum)-1 };
 		static const GLenum dxtogl_magFilter[4] = { GL_NEAREST,	GL_NEAREST,	GL_LINEAR, GL_LINEAR };
@@ -427,6 +430,7 @@ public:
 
 	void					Lock( GLMTexLockParams *params, char** addressOut, int* yStrideOut, int *zStrideOut );
 	void					Unlock( GLMTexLockParams *params );
+	GLuint                                  GetTexName() { return m_texName; }
 	
 protected:
 	friend class GLMContext;			// only GLMContext can make CGLMTex objects
@@ -450,13 +454,17 @@ protected:
 	void					WriteTexels( GLMTexLockDesc *desc, bool writeWholeSlice=true, bool noDataWrite=false );
 		// last param lets us send NULL data ptr (only legal with uncompressed formats, beware)
 		// this helps out ResetSRGB.
+
+#if defined( OSX )
+	void					HandleSRGBMismatch( bool srgb, int &srgbFlipCount );
+	void					ResetSRGB( bool srgb, bool noDataWrite );
+	// re-specify texture format to match desired sRGB form
+	// noWrite means send NULL for texel source addresses instead of actual data - ideal for RT's
+#endif
 				
 	bool					IsRBODirty() const;
 	void					ForceRBONonDirty();
 	void					ForceRBODirty();
-	
-	void					AllocBacking();
-	void					ReleaseBacking();
 			
 		// re-specify texture format to match desired sRGB form
 		// noWrite means send NULL for texel source addresses instead of actual data - ideal for RT's
@@ -464,25 +472,26 @@ protected:
 	GLuint					m_texName;			// name of this texture in the context
 	GLenum					m_texGLTarget;
 	uint					m_nSamplerType;		// SAMPLER_2D, etc.
+	
 	GLMTexSamplingParams	m_SamplingParams;
+
 	GLMTexLayout			*m_layout;		// layout of texture (shared across all tex with same layout)
 	
 	uint					m_nLastResolvedBatchCounter;
 					
 	int						m_minActiveMip;//index of lowest mip that has been written.  used to drive setting of GL_TEXTURE_MAX_LEVEL.
 	int						m_maxActiveMip;//index of highest mip that has been written.  used to drive setting of GL_TEXTURE_MAX_LEVEL.
-	int						m_mipCount;
 						
 	GLMContext				*m_ctx;			// link back to parent context
 		
+	
 	CGLMFBO                 *m_pBlitSrcFBO;
 	CGLMFBO                 *m_pBlitDstFBO;
-	
 	GLuint					m_rboName;		// name of MSAA RBO backing the tex if MSAA enabled (or zero)
 													
 	int						m_rtAttachCount; // how many RT's have this texture attached somewhere
 
-	char					*m_pBacking;		// backing storage if available
+	char					*m_backing;		// backing storage if available
 	
 	int						m_lockCount;	// lock reqs are stored in the GLMContext for tracking
 
@@ -493,6 +502,7 @@ protected:
 	bool					m_texClientStorage;	// was CS selected for texture
 	bool					m_texPreloaded;		// has it been kicked into VRAM with GLMContext::PreloadTex yet
 
+	int						m_srgbFlipCount;
 #if GLMDEBUG
 	CGLMTex					*m_pPrevTex;
 	CGLMTex					*m_pNextTex;

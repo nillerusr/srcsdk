@@ -1149,7 +1149,7 @@ inline void CVertexBuilder::FastAdvanceNVertices( int n )
 
 
 
-#if !defined(COMPILER_MSVC64) && !defined(__arm__)
+#ifndef COMPILER_MSVC64
 // Implement for 64-bit Windows if needed.
 //-----------------------------------------------------------------------------
 // Fast Vertex! No need to call advance vertex, and no random access allowed
@@ -1184,7 +1184,7 @@ inline void CVertexBuilder::FastVertex( const ModelVertexDX7_t &vertex )
 
 			emms
 	}
-#elif defined(GNUC) && !defined(__arm__)
+#elif defined(GNUC)
 	const void *pRead = &vertex;
 	void *pCurrPos = m_pCurrPosition;
 	__asm__ __volatile__ (
@@ -3329,6 +3329,8 @@ inline void CMeshBuilder::ComputeNumVertsAndIndices( int *pMaxVertices, int *pMa
 		break;
 
 	default:
+		*pMaxVertices = 0;
+		*pMaxIndices = 0;
 		Assert(0);
 	}
 

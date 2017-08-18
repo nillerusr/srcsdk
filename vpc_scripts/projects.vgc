@@ -190,3 +190,8 @@ $Project "first"
 {
 	"vinterface_wrapper/first/first.vpc"
 }
+
+$Project "togl"
+{
+	"togl/togl.vpc"
+}

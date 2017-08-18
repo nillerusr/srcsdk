@@ -3,6 +3,9 @@
 #define	GLMDEBUG_H
 
 #include "tier0/platform.h"
+#if defined( OSX )
+#include <stdarg.h>
+#endif
 
 // include this anywhere you need to be able to compile-out code related specifically to GLM debugging.
 
@@ -132,11 +135,7 @@ inline void GLMDebugger( void )
 {
 	if (GLMDebugChannelMask() & (1<<eDebugger))
 	{
-#ifdef OSX
-		asm {int 3 };
-#else
 		DebuggerBreak();
-#endif
 	}
 	
 	if (GLMDebugChannelMask() & (1<<eGLProfiler))

@@ -10,10 +10,6 @@
 
 #pragma once
 
-#ifdef OSX
-#include "glmgr/glmgrbasics.h"
-#endif
-
 //===============================================================================
 
 // forward declarations
