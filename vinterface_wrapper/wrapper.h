@@ -78,7 +78,7 @@ public:
 		m_szName = NULL;
 	}
 	
-	IBaseInterface *GetInterface( const char *pName, int *pReturnCode ) const
+	IBaseInterface *GetInterface( const char *pName, int *pReturnCode = 0 ) const
 	{
 		if( CreateInterface )
 			return (IBaseInterface*)CreateInterface( pName, pReturnCode );
@@ -132,8 +132,9 @@ typedef void (*WrapInitFn)( Module *module );
 // Used to wrap classes.
 struct WrapInterfaceReg
 {
-	WrapInterfaceReg(const char *pModuleName, const char *pName, IBaseInterface **iface, WrapInitFn fn = NULL, WrapInitFn fnDestruct = NULL );
-	WrapInterfaceReg(const char *pModuleName, bool isModule = true, WrapInitFn fn = NULL, WrapInitFn fnDestruct = NULL );
+	WrapInterfaceReg(const char *pModuleName, const char *pName, IBaseInterface **iface, WrapInitFn fn = NULL, WrapInitFn fnDestruct = NULL ); // get interface ptr
+	WrapInterfaceReg(const char *pModuleName, bool isModule = true, WrapInitFn fn = NULL, WrapInitFn fnDestruct = NULL ); // wrap module or just load library
+	WrapInterfaceReg(const char *pModuleName, const char *pName, WrapInitFn fn = NULL, WrapInitFn fnDestruct = NULL ); // vtable rewrite
 	~WrapInterfaceReg();
 
 	IBaseInterface			**m_pIface;
@@ -149,7 +150,43 @@ struct WrapInterfaceReg
 
 #define VA_ARGS(...) , ##__VA_ARGS__
 
+// === Load library and get specific interface ==== //
+
 #define GET_INTERFACE_PTR(szReadableName, pModule, pName, iface, ...) \
 	static WrapInterfaceReg __g_Wrap##szReadableName##_reg((pModule), (pName), (IBaseInterface**)(iface) VA_ARGS(__VA_ARGS__) )
-#define WRAP_LIBRARY( szReadableName, pModule, ... )	static WrapInterfaceReg __g_Wrap##szReadableName##_reg(pModule, false VA_ARGS(__VA_ARGS__) )
+
+// ==== Load library and notify ==== //
+
+#define LOAD_LIBRARY( szReadableName, pModule, ... )	static WrapInterfaceReg __g_Wrap##szReadableName##_reg(pModule, false VA_ARGS(__VA_ARGS__) )
+
+// ==== Generic wrapper ==== //
+
 #define WRAP_MODULE( szReadableName, pModule, ... )	static WrapInterfaceReg __g_Wrap##szReadableName##_reg(pModule, true VA_ARGS(__VA_ARGS__) )
+
+// ==== VTable manipulation ==== //
+
+// IDEA: Don't overwrite original vtable, to keep possibility of calling methods of original class(WHAT ABOUT IT'S MEMBERS????)
+// Let's overwrite vtable of workaround class, then expose workaround class
+// The main restriction: workaround class should not implement nor define it own members
+// Meanwhile wrap class should implement only these methods, that will be used and define only public or protected, that can be used in workaround class
+
+
+#define IMPLEMENT_WORKAROUND_CTOR( className, srcClass ) className( IBaseInterface *dst ) : srcClass( dst ) { }
+
+#define IMPLEMENT_SOURCECLASS_CTOR( className )           \
+	className( IBaseInterface *dst )                      \
+	{                                                     \
+		void **dst = get_vtable( dst );                   \
+		void **src = get_vtable( this );                  \
+		vtable_rewrite( dst, src, &backup, &backupSize ); \
+	}
+
+#define VTABLE_WRITE( szReadableName, pModule, pName, workaroundClass ) \
+	void __##workaroundClass##_Init( Module *module )                   \
+	{                                                                   \
+		IBaseInterface *iface = module->GetInterface( (pName) );        \
+		(workaroundClass) *clazz = new (workaroundClass)( iface );      \
+		delete clazz;                                                   \
+	}                                                                   \
+	static WrapInterfaceReg __g_Wrap##szReadableName##_reg((pModule), (pName), __##workaroundClass##_Init )
+

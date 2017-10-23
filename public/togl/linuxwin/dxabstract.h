@@ -138,6 +138,7 @@ struct TOGL_CLASS IDirect3DBaseTexture9 : public IDirect3DResource9						// "A T
 {
 	D3DSURFACE_DESC			m_descZero;			// desc of top level.
 	CGLMTex					*m_tex;				// a CGLMTex can represent all forms of tex
+	int						m_srgbFlipCount;
 
 	virtual					~IDirect3DBaseTexture9();
 	D3DRESOURCETYPE	TOGLMETHODCALLTYPE GetType();
@@ -269,8 +270,7 @@ struct TOGL_CLASS IDirect3DPixelShader9 : public IDirect3DResource9	//was IUnkno
 	uint					m_pixHighWater;		// count of active constant slots referenced by shader.
 	uint					m_pixSamplerMask;	// (1<<n) mask of samplers referemnced by this pixel shader
 												// this can help FlushSamplers avoid SRGB flipping on textures not being referenced...
-	uint					m_pixSamplerTypes;  // SAMPLER_TYPE_2D, etc.
-	uint					m_pixFragDataMask;  // (1<<n) mask of gl_FragData[n] referenced by this pixel shader
+	uint					m_pixSamplerTypes; // SAMPLER_TYPE_2D, etc.
 	
 	virtual					~IDirect3DPixelShader9();
 };
@@ -404,7 +404,6 @@ struct TOGL_CLASS IDirect3DDevice9 : public IUnknown
 	//
 	HRESULT TOGLMETHODCALLTYPE Reset(D3DPRESENT_PARAMETERS* pPresentationParameters);
 	HRESULT TOGLMETHODCALLTYPE SetViewport(CONST D3DVIEWPORT9* pViewport);
-	HRESULT TOGLMETHODCALLTYPE GetViewport(D3DVIEWPORT9* pViewport);
     HRESULT TOGLMETHODCALLTYPE BeginScene();
 	HRESULT TOGLMETHODCALLTYPE Clear(DWORD Count,CONST D3DRECT* pRects,DWORD Flags,D3DCOLOR Color,float Z,DWORD Stencil);
     HRESULT TOGLMETHODCALLTYPE EndScene();
@@ -485,7 +484,7 @@ struct TOGL_CLASS IDirect3DDevice9 : public IUnknown
     
 	FORCEINLINE HRESULT TOGLMETHODCALLTYPE SetIndices(IDirect3DIndexBuffer9* pIndexData);
 	HRESULT TOGLMETHODCALLTYPE SetIndicesNonInline(IDirect3DIndexBuffer9* pIndexData);
-
+			
 	// State management.
     FORCEINLINE HRESULT TOGLMETHODCALLTYPE SetRenderStateInline(D3DRENDERSTATETYPE State,DWORD Value);
 	FORCEINLINE HRESULT TOGLMETHODCALLTYPE SetRenderStateConstInline(D3DRENDERSTATETYPE State,DWORD Value);
@@ -515,7 +514,6 @@ struct TOGL_CLASS IDirect3DDevice9 : public IUnknown
     HRESULT TOGLMETHODCALLTYPE SetLight(DWORD Index,CONST D3DLIGHT9*);
     void TOGLMETHODCALLTYPE SetGammaRamp(UINT iSwapChain,DWORD Flags,CONST D3DGAMMARAMP* pRamp);
 	
-
 	void TOGLMETHODCALLTYPE SaveGLState();
 	void TOGLMETHODCALLTYPE RestoreGLState();
 
@@ -546,6 +544,7 @@ struct TOGL_CLASS IDirect3DDevice9 : public IUnknown
 private:
 	IDirect3DDevice9( const IDirect3DDevice9& );
 	IDirect3DDevice9& operator= ( const IDirect3DDevice9& );
+
 	// Flushing changes to GL
 	void FlushClipPlaneEquation();
 	void InitStates();
@@ -568,9 +567,8 @@ private:
 	// Member variables
 
 	DWORD						m_nValidMarker;
-public:
-	IDirect3DDevice9Params	m_params;						// mirror of the creation inputs
-private:
+
+	IDirect3DDevice9Params		m_params;						// mirror of the creation inputs
 
 	// D3D flavor stuff
 	IDirect3DSurface9			*m_pRenderTargets[4];
@@ -588,8 +586,8 @@ private:
 	IDirect3DVertexShader9		*m_vertexShader;				// Set by SetVertexShader...
 	IDirect3DPixelShader9		*m_pixelShader;					// Set by SetPixelShader...
 
-	IDirect3DBaseTexture9		*m_textures[GLM_SAMPLER_COUNT];				// set by SetTexture... NULL if stage inactive
-	
+	IDirect3DBaseTexture9		*m_textures[16];				// set by SetTexture... NULL if stage inactive
+	D3DSamplerDesc				m_samplers[16];					// set by SetSamplerState..
 	// GLM flavor stuff
 	GLMContext					*m_ctx;
 	CGLMFBOMap					*m_pFBOs;
@@ -675,7 +673,7 @@ private:
 		bool						m_FogEnable;			// not really pushed to GL, just latched here
 
 		// samplers
-		//GLMTexSamplingParams		m_samplers[GLM_SAMPLER_COUNT];
+		GLMTexSamplingParams		m_samplers[ 16 ];
 	} gl;
 	
 #if GL_BATCH_PERF_ANALYSIS
@@ -712,7 +710,7 @@ FORCEINLINE HRESULT TOGLMETHODCALLTYPE IDirect3DDevice9::SetSamplerState( DWORD 
 	return SetSamplerStateNonInline( Sampler, Type, Value );
 #else
 	Assert( GetCurrentOwnerThreadId() == ThreadGetCurrentId() );
-	Assert( Sampler < GLM_SAMPLER_COUNT );
+	Assert( Sampler < 16 );
 	
 	m_ctx->SetSamplerDirty( Sampler );
 
@@ -749,7 +747,7 @@ FORCEINLINE HRESULT TOGLMETHODCALLTYPE IDirect3DDevice9::SetSamplerState( DWORD 
 			m_ctx->SetSamplerMaxAnisotropy( Sampler, Value);
 			break;
 		case D3DSAMP_SRGBTEXTURE: 
-			//m_samplers[ Sampler ].m_srgb = Value;
+			m_samplers[ Sampler ].m_srgb = Value;
 			m_ctx->SetSamplerSRGBTexture(Sampler, Value);
 			break;
 		case D3DSAMP_SHADOWFILTER: 
@@ -770,7 +768,7 @@ FORCEINLINE void TOGLMETHODCALLTYPE IDirect3DDevice9::SetSamplerStates(
 	SetSamplerStatesNonInline( Sampler, AddressU, AddressV, AddressW, MinFilter, MagFilter, MipFilter );
 #else
 	Assert( GetCurrentOwnerThreadId() == ThreadGetCurrentId() );
-	Assert( Sampler < GLM_SAMPLER_COUNT);
+	Assert( Sampler < 16);
 		
 	m_ctx->SetSamplerDirty( Sampler );
 		
@@ -784,7 +782,6 @@ FORCEINLINE HRESULT TOGLMETHODCALLTYPE IDirect3DDevice9::SetTexture(DWORD Stage,
 	return SetTextureNonInline( Stage, pTexture );
 #else
 	Assert( GetCurrentOwnerThreadId() == ThreadGetCurrentId() );
-	Assert( Stage < GLM_SAMPLER_COUNT );
 	m_textures[Stage] = pTexture;
 	m_ctx->SetSamplerTex( Stage, pTexture ? pTexture->m_tex : NULL );
 	return S_OK;
@@ -812,10 +809,13 @@ FORCEINLINE GLenum D3DBlendOperationToGL( DWORD operation )
 	switch (operation)
 	{
 		case	D3DBLENDOP_ADD			: return GL_FUNC_ADD;				// The result is the destination added to the source. Result = Source + Destination
-		case	D3DBLENDOP_SUBTRACT		: return GL_FUNC_SUBTRACT;			// The result is the destination subtracted from to the source. Result = Source - Destination
-		case	D3DBLENDOP_REVSUBTRACT	: return GL_FUNC_REVERSE_SUBTRACT;	// The result is the source subtracted from the destination. Result = Destination - Source
-		case	D3DBLENDOP_MIN			: return GL_MIN;					// The result is the minimum of the source and destination. Result = MIN(Source, Destination)
-		case	D3DBLENDOP_MAX			: return GL_MAX;					// The result is the maximum of the source and destination. Result = MAX(Source, Destination)
+
+		/* not covered by dxabstract.h..
+			case	D3DBLENDOP_SUBTRACT		: return GL_FUNC_SUBTRACT;			// The result is the destination subtracted from to the source. Result = Source - Destination
+			case	D3DBLENDOP_REVSUBTRACT	: return GL_FUNC_REVERSE_SUBTRACT;	// The result is the source subtracted from the destination. Result = Destination - Source
+			case	D3DBLENDOP_MIN			: return GL_MIN;					// The result is the minimum of the source and destination. Result = MIN(Source, Destination)
+			case	D3DBLENDOP_MAX			: return GL_MAX;					// The result is the maximum of the source and destination. Result = MAX(Source, Destination)
+		*/
 		default:
 			DXABSTRACT_BREAK_ON_ERROR();
 			return 0xFFFFFFFF;
@@ -1174,7 +1174,7 @@ FORCEINLINE HRESULT TOGLMETHODCALLTYPE IDirect3DDevice9::SetStreamSource(UINT St
 	// OK, we are being given the stride, we don't need to calc it..
 
 	GLMPRINTF(("-X- IDirect3DDevice9::SetStreamSource setting stream #%d to D3D buf %p (GL name %d); offset %d, stride %d", StreamNumber, pStreamData, (pStreamData) ? pStreamData->m_vtxBuffer->m_name: -1, OffsetInBytes, Stride));
-	
+		
 	if ( !pStreamData )
 	{
 		OffsetInBytes = 0;

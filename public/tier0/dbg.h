@@ -19,6 +19,15 @@
 #include <stdio.h>
 #include <stdarg.h>
 
+#ifdef ANDROID
+#include <android/log.h>
+#define TAG "SourceSDK2013"
+#define PRIO ANDROID_LOG_DEBUG
+#define android_printf(...) __android_log_print(PRIO, TAG, __VA_ARGS__)
+#else
+#define android_printf(...)
+#endif
+
 #ifdef POSIX
 #define __cdecl
 #endif
@@ -479,10 +488,6 @@ DBG_INTERFACE void NetLog( int level, PRINTF_FORMAT_STRING const tchar *pMsg, ..
 void ValidateSpew( class CValidator &validator );
 
 #ifdef ANDROID
-#include <android/log.h>
-#define TAG "SourceSDK2013"
-#define PRIO ANDROID_LOG_DEBUG
-#define android_printf(...) __android_log_print(PRIO, TAG, __VA_ARGS__)
 inline void __DevMsg( int level, PRINTF_FORMAT_STRING const tchar* pMsg, ... )
 {
 	va_list arg_ptr;

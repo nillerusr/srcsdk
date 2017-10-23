@@ -38,7 +38,7 @@ int fun_rewrite( void *dst, const void *src, const size_t bytes, void *srcBackup
 
 // Rewrite vtable located in dst by vtable located in src
 // Entries filled with __cxa_pure_virtual are ignored and will not be written to dst
-size_t vtable_rewrite( void **dst, void **src );
+size_t vtable_rewrite( void **dst, void **src, void **dstBackup );
 
 inline void **get_vtable( void *classptr ) { return *(void***)classptr; }
 

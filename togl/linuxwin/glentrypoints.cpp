@@ -153,6 +153,8 @@ void ClearOpenGLEntryPoints()
 }
 COpenGLEntryPoints *ToGLConnectLibraries( CreateInterfaceFn factory )
 {
+	android_printf( "ToGLConnectLibraries()" );
+	
 	ConnectTier1Libraries( &factory, 1 );
 	ConVar_Register();
 	ConnectTier2Libraries( &factory, 1 );
@@ -326,7 +328,10 @@ COpenGLEntryPoints::COpenGLEntryPoints()
 #undef GL_EXT
 {
 	// Locally cache the copy of the GL device strings, to avoid needing to call these glGet's (which can be extremely slow) more than once.
+	android_printf( "COpenGLEntryPoints::COpenGLEntryPoints()" );
 	const char *pszString = ( const char * )glGetString(GL_VENDOR);
+	
+	android_printf( "VENDOR: %s", pszString );
 	m_pGLDriverStrings[cGLVendorString] = strdup( pszString ? pszString : "" );
 
 	m_nDriverProvider = cGLDriverProviderUnknown;

@@ -81,6 +81,7 @@ void CTouchControls::Shutdown( )
 
 void CTouchControls::Frame( )
 {
+	
 }
 
 void CTouchControls::IN_TouchAddDefaultButton( const char *name, const char *texturefile, const char *command, float x1, float y1, float x2, float y2, rgba_t color, ETouchRound round, float aspect, int flags )

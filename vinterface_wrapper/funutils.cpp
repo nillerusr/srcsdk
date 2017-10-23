@@ -143,23 +143,41 @@ int fun_rewrite( void *dst, const void *src, const size_t bytes, void *srcBackup
 
 extern "C" void __cxa_pure_virtual( void ); // link with libstdc++
 
-size_t vtable_rewrite( void **dst, void **src )
+size_t vtable_rewrite( void **dst, void **src, void **dstBackup, size_t *overridedSize )
 {
 	size_t i = 0;
 	size_t size = 0;
+	size_t definedSize = 0;
 	
-	for( void **i = dst; *i; size++, i++ );
+	for( void **i = dst, **j = src; 
+		*i; 
+		i++, j++, size++ )
+	{
+		if( *j == __cxa_pure_virtual )
+			continue;
+	
+		definedSize++;
+	}
 	
 	if( mprotect_shortcut( dst, size, PROT_READ | PROT_WRITE | PROT_EXEC ) ) // This will succeeded only if dst was allocated by mmap().
 	{
 		return -1; 
 	}
 	
-	for( ; *src && *dst; i++, src++, dst++ )
+	if( dstBackup )
+	{
+		*dstBackup = calloc( definedSize, sizeof(void*) );
+		*overridedSize = definedSize;
+	}
+	
+	for( size_t j = 0; *dst; src++, dst++ )
 	{
 		if( *src == __cxa_pure_virtual )
 			continue;
 		
+		/*if( dstBackup )
+			(*dstBackup)[j++] = *dst;*/
+				
 		*dst = *src;
 	}
 	
