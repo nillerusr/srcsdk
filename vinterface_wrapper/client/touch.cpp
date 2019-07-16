@@ -95,7 +95,7 @@ void CTouchControls::Init( )
 	IN_TouchAddButton( "look", "", "", touch_look, 0.5, 0, 1, 1, -1, color );
 	IN_TouchAddButton( "move", "", "", touch_move, 0, 0, 0.5, 1, -1, color );
 
-	//IN_TouchAddButton( "menu", "", "map test1", touch_command, 0.000000, 0.820000, 0.040000, 0.860000, -1, color );
+	IN_TouchAddButton( "menu", "", "map test1", touch_command, 0.000000, 0.820000, 0.040000, 0.860000, -1, color );
 
 	Msg( "CTouchControls::Init()" );
 }
@@ -252,15 +252,27 @@ void CTouchControls::ButtonPress( event_t *ev )
 			if(  ev->x > g_Buttons[i].x1 && ev->x < g_Buttons[i].x2 && ev->y > g_Buttons[i].y1 && ev->y < g_Buttons[i].y2 )
 			{
 				g_Buttons[i].finger = ev->fingerid;
-				if( g_Buttons[i].type == touch_move )
+				if( g_Buttons[i].type == touch_move  )
 				{
-					move_start_x = (float)ev->x / screen_w;
-					move_start_y = (float)ev->y / screen_h;
+					if( move_finger == -1 )
+					{
+						move_start_x = (float)ev->x / screen_w;
+						move_start_y = (float)ev->y / screen_h;
+						move_finger = ev->fingerid;
+					}
+					else
+						g_Buttons[i].finger = move_finger;
 				}
 				else if( g_Buttons[i].type == touch_look )
 				{
-					dx = (float)ev->x / screen_w;
-					dy = (float)ev->y / screen_h;
+					if( look_finger == -1 )
+					{
+						dx = (float)ev->x / screen_w;
+						dy = (float)ev->y / screen_h;
+						look_finger = ev->fingerid;
+					}
+					else
+						g_Buttons[i].finger = look_finger;
 				}
 				else
 				{
@@ -275,15 +287,19 @@ void CTouchControls::ButtonPress( event_t *ev )
 		{
 			if( g_Buttons[i].finger == ev->fingerid )
 			{
+				g_Buttons[i].finger = -1;
+
 				if( g_Buttons[i].type == touch_move )
 				{
 					if( w ) { engine->ClientCmd("-forward"); }
 					if( a ) { engine->ClientCmd("-moveleft"); }
 					if( s ) { engine->ClientCmd("-back"); }
 					if( d ) { engine->ClientCmd("-moveright"); }
+					move_finger = -1;
 				}
-				g_Buttons[i].finger = -1;
-				if( g_Buttons[i].command[0] == '+' )
+				else if( g_Buttons[i].type == touch_look )
+					look_finger = -1;
+				else if( g_Buttons[i].command[0] == '+' )
 				{
 					char cmd[256];
 					snprintf( cmd, sizeof cmd, "%s", g_Buttons[i].command );
