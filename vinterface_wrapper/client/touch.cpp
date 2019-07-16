@@ -11,8 +11,11 @@ Please, don't punish, Mr. Newell. :)
 #include <dlfcn.h>
 #include <string.h>
 
-#define TOUCH_YAW 220
+#define TOUCH_YAW 120
 #define TOUCH_PITCH 90
+#define TOUCH_FORWARDZONE 0.06
+#define TOUCH_SIDEZONE 0.06
+#define SENSITIVITY 2
 
 CTouchControls g_Touch;
 static CTouchDefaultButton g_DefaultButtons[64];
@@ -181,11 +184,10 @@ void CTouchControls::TouchMotion( event_t *ev )
 			{
 				//LogPrintf( "TouchMotion, touch_move x:%f, y:%f, startx:%f, starty:%f", x, y, move_start_x, move_start_y );
 	
-				if( ( move_start_x - x ) >= 0.01 ) {
-					if( !a ) {
-						a = true;
-						engine->ClientCmd("+moveleft");
-					}
+				if( ( ( move_start_x - x ) / TOUCH_SIDEZONE ) > 0.9 && !a ) 
+				{
+					a = true;
+					engine->ClientCmd("+moveleft");
 				}
 				else if( a )
 				{
@@ -193,34 +195,31 @@ void CTouchControls::TouchMotion( event_t *ev )
 					engine->ClientCmd("-moveleft");
 				}
 
-				if( ( move_start_x - x ) <= -0.01 ) {
-					if( !d ) {
-						d = true;
-						engine->ClientCmd("+moveright");
-					}
+				if( ( ( move_start_x - x ) / TOUCH_SIDEZONE ) < -0.9 && !d )
+				{
+					d = true;
+					engine->ClientCmd("+moveright");
 				}
-
-				else if( d ) {
+				else if( d )
+				{
 					d = false;
 					engine->ClientCmd("-moveright");
 				}
 
-				if( ( move_start_y - y ) <= -0.01 ) {
-					if( !s ) {
-						s = true;
-						engine->ClientCmd("+back");
-					}
+				if( ( ( move_start_y - y ) / TOUCH_FORWARDZONE ) < -0.7 && !s )
+				{
+					s = true;
+					engine->ClientCmd("+back");
 				}
-				else if( s ) {
+				else if( s )
+				{
 					s = false;
 					engine->ClientCmd("-back");
 				}
 
-				if( ( move_start_y - y ) >=0.01 ) {
-					if( !w ) {
-						w = true;
-						engine->ClientCmd("+forward");
-					}
+				if( ( ( move_start_y - y ) / TOUCH_FORWARDZONE ) > 0.7 && !w ) {
+					w = true;
+					engine->ClientCmd("+forward");
 				}
 				else if( w ) {
 					w = false;
@@ -232,8 +231,8 @@ void CTouchControls::TouchMotion( event_t *ev )
 				QAngle ang, newang;
 				engine->GetViewAngles( ang );
 				LogPrintf( "Angles %f, %f", ang.x, ang.y );
-				newang.y = ang.y + TOUCH_YAW * ( dx - x );
-				newang.x = ang.x - TOUCH_PITCH * ( dy - y );
+				newang.y = ang.y + TOUCH_YAW * ( dx - x ) * SENSITIVITY;
+				newang.x = ang.x - TOUCH_PITCH * ( dy - y ) * SENSITIVITY;
 				newang.z = ang.z;
 				LogPrintf( "NewAngles %f, %f", newang.x, newang.y );
 				engine->SetViewAngles( newang );
