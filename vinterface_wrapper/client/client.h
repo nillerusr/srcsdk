@@ -17,9 +17,13 @@ Please, don't punish, Mr. Newell. :)
 #include "IGameUIFuncs.h"
 #include "filesystem.h"
 #include "IGameUI.h"
+#include "vgui/ISurface.h"
+#include "vgui/IInputInternal.h"
+#include "vgui/IScheme.h"
 
 extern IBaseClientDLL *realClientDLL; // real client implementation
 extern IBaseClientDLL *wrapClientDLL; // wrapper class
+#define CMD_SIZE 64
 
 // NULL until client is initialized
 extern IVEngineClient	*engine;
@@ -28,6 +32,8 @@ extern IEngineVGui		*enginevgui;
 extern IGameUIFuncs		*gameuifuncs;
 extern IInputSystem		*inputsystem;
 extern IGameUI			*gameui;
+extern vgui::ISurface		*g_pSurface;
+extern vgui::IScheme 		*g_pScheme;
 
 enum ETouchButtonType
 {
@@ -63,6 +69,28 @@ struct rgba_t
 	unsigned char r, g, b, a; 
 };
 
+enum eventtype_t
+{
+	event_touchmotion,
+	event_touchup,
+	event_touchdown
+};
+
+struct event_clientcmd_t
+{
+	char buf[CMD_SIZE];
+};
+
+typedef struct event_s
+{
+	eventtype_t type;
+	event_clientcmd_t clientCmd;
+	int x;
+	int y;
+	int fingerid;
+	int touchDevId;
+} event_t;
+
 class CTouchButton
 {
 public:
@@ -85,6 +113,7 @@ public:
 	float fadespeed;
 	float fadeend;
 	float aspect;
+	int textureID;
 };
 
 class CTouchDefaultButton
@@ -98,6 +127,7 @@ public:
 	ETouchRound round;
 	float aspect;
 	int flags;
+	int textureID;
 };
 
 class CTouchControls
@@ -111,9 +141,13 @@ public:
 	
 	void Shutdown( );
 	
-	void Frame( );
+	void Paint( );
 	
 	void IN_TouchAddDefaultButton( const char *name, const char *texturefile, const char *command, float x1, float y1, float x2, float y2, rgba_t color, ETouchRound round, float aspect, int flags );
+	void IN_TouchAddButton( const char *name, const char *texturefile, const char *command, ETouchButtonType type, float x1, float y1, float x2, float y2, int fingerid, rgba_t color );
+
+	void ButtonPress( event_t *ev );
+	void TouchMotion( event_t *ev );
 private:
 	bool initialized;
 	ETouchState state;
@@ -125,8 +159,10 @@ private:
 	CTouchButton *move;
 	
 	float move_start_x, move_start_y;
-	float forward, side;
-	float yaw, pitch;
+	float dx, dy;
+	float sx, sy;
+
+	bool w,a,s,d;
 	// editing
 	CTouchButton *edit;
 	CTouchButton *selection;
@@ -143,6 +179,7 @@ private:
 	int closetexture;
 	int joytexture; // touch indicator
 	bool configchanged;
+	vgui::HFont textfont;
 };
 
 extern CTouchControls g_Touch;

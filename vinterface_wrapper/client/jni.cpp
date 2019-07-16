@@ -2,33 +2,17 @@
 #include <jni.h>
 #include <pthread.h>
 #include "miniSDL.h"
+#include "funutils.h"
 #include "vgui/IInputInternal.h"
 
 #define ANDROID_MAX_EVENTS 128
-#define CMD_SIZE 64
 
-enum eventtype_t
+enum actions
 {
-	event_clientcmd,
-	event_touchmotion,
-	event_touchup,
-	event_touchdown
+	ACTION_DOWN = 0,
+	ACTION_UP,
+	ACTION_MOVE
 };
-
-struct event_clientcmd_t
-{
-	char buf[CMD_SIZE];
-};
-
-typedef struct event_s
-{
-	eventtype_t type;
-	union
-	{
-		event_clientcmd_t clientCmd;
-		SDL_TouchFingerEvent tfinger; 
-	} e;
-} event_t;
 
 static struct {
 	pthread_mutex_t mutex; // this mutex is locked while not running frame, used for events synchronization
@@ -38,35 +22,12 @@ static struct {
 	float mousex, mousey;
 } events = { PTHREAD_MUTEX_INITIALIZER, PTHREAD_MUTEX_INITIALIZER };
 
-/*static struct jnimethods_s
-{
-	JavaVM *vm;
-	JNIEnv *env;
-} jni;*/
-
 #define Android_Lock() pthread_mutex_lock(&events.mutex);
 #define Android_Unlock() pthread_mutex_unlock(&events.mutex);
 #define Android_PushEvent() Android_Unlock()
 
-vgui::IInputInternal *g_pInputInternal = NULL;
-vgui::IInput *g_pInput = NULL;
-
-GET_INTERFACE_PTR( VGUI_InputInternal, "libvgui2.so", VGUI_INPUTINTERNAL_INTERFACE_VERSION, &g_pInputInternal );
-GET_INTERFACE_PTR( VGUI_Input, "libvgui2.so", VGUI_INPUT_INTERFACE_VERSION, &g_pInput );
-
-typedef int (*SDL_EventFilter)(void *userdata, SDL_Event *event );
-extern "C" int SDLWrap_EventFilter( void *userdata, SDL_Event *event );
-
-typedef int (*SDL_SetEventFilter_t)(SDL_EventFilter filter, void *userdata );
-
-void SDLWrap_Init( Module *SDL2 )
-{
-	SDL_SetEventFilter_t SDL_AddEventWatch = (SDL_SetEventFilter_t)SDL2->Resolve("SDL_AddEventWatch");
-	
-	SDL_AddEventWatch( SDLWrap_EventFilter, NULL );
-}
-
-WRAP_LIBRARY( SDL2, "libSDL2.so", SDLWrap_Init );
+#define DECLARE_JNI_INTERFACE( ret, name, ... ) \
+	JNIEXPORT ret JNICALL Java_org_libsdl_app_SDLActivity_##name( JNIEnv *env, jclass clazz, __VA_ARGS__ )
 
 /*
 ========================
@@ -89,40 +50,23 @@ event_t *Android_AllocEvent()
 
 void Android_RunEvents()
 {
-	int i, w, h;
 	Android_Lock();
 	pthread_mutex_unlock( &events.framemutex );
-	
-	engine->GetScreenSize( w, h );
-	
+
 	for( int i = 0; i < events.count; i++ )
 	{
 		event_t *event = events.queue + i;
 		
 		switch( event->type )
 		{
-		case event_clientcmd:
-			engine->ClientCmd( event->e.clientCmd.buf );
-			break;
 		case event_touchmotion:
-			// handled
+			g_Touch.TouchMotion( event );
 			break;
 		case event_touchdown:
-			
-			g_pInputInternal->InternalMousePressed( MOUSE_LEFT );
-			LogPrintf( "Mouse pressed" );
-			if( g_pInputInternal->IsMouseDown( MOUSE_LEFT ) )
-			{
-				LogPrintf( "VGUI accepted this" );
-			}
+			g_Touch.ButtonPress( event );
 			break;
 		case event_touchup:
-			LogPrintf( "Mouse released" );
-			g_pInputInternal->InternalMouseReleased( MOUSE_LEFT );
-			if( !g_pInputInternal->IsMouseDown( MOUSE_LEFT ) )
-			{
-				LogPrintf( "VGUI accepted this" );
-			}
+			g_Touch.ButtonPress( event );
 			break;
 		}
 	}
@@ -132,54 +76,28 @@ void Android_RunEvents()
 	pthread_mutex_lock( &events.framemutex );
 }
 
-extern "C" 
+DLLEXPORT int TouchEvent( int touchDevId, int fingerid, int x, int y, int action )
 {
-int SDLWrap_EventFilter(void* userdata, SDL_Event* event)
-{	
 	event_t *ev = Android_AllocEvent();
-	switch( event->type )
+	switch( action )
 	{
-		case SDL_FINGERMOTION:
-			ev->type = event_touchmotion;
-			ev->e.tfinger = event->tfinger;
-			break;
-		case SDL_FINGERUP:
-			ev->type = event_touchup;
-			ev->e.tfinger = event->tfinger;
-			break;
-		case SDL_FINGERDOWN:
+		case ACTION_DOWN:
 			ev->type = event_touchdown;
-			ev->e.tfinger = event->tfinger;
-			break;
+		break;
+		case ACTION_UP:
+			ev->type = event_touchup;
+		break;
+		case ACTION_MOVE:
+			ev->type = event_touchmotion;
+			ev->touchDevId = touchDevId;
+		break;
 		default: break;
 	}
-	
+
+	ev->x = x;
+	ev-> y = y;
+	ev->fingerid = fingerid;
+	LogPrintf( "TouchEvent, %d, %d", x, y );
+
 	Android_PushEvent();
-	
-	return 1;
-}
-
-JNIEXPORT void JNICALL Java_com_valvesoftware_ValveActivity_clientCommand( JNIEnv *env, jclass clazz, jstring jstr )
-{
-	const char *str = env->GetStringUTFChars( jstr, 0 );
-	event_t *event = Android_AllocEvent();
-	
-	event->type = event_clientcmd;
-	strncpy( event->e.clientCmd.buf, str, CMD_SIZE-1 );
-	event->e.clientCmd.buf[CMD_SIZE-1] = 0;
-	
-}
-
-JNIEXPORT jboolean JNICALL Java_com_valvesoftware_ValveActivity_isGameUIActive( JNIEnv *env, jclass clazz )
-{
-	if( enginevgui )
-		return enginevgui->IsGameUIVisible();
-	
-	return false;
-}
-
-JNIEXPORT jboolean JNICALL Java_com_valvesoftware_ValveActivity_shouldDrawControls( JNIEnv *env, jclass clazz )
-{
-	return ( engine && engine->IsInGame() ) || ( enginevgui && enginevgui->IsGameUIVisible() );
-}
 }
