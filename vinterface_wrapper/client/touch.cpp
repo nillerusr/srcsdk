@@ -11,6 +11,9 @@ Please, don't punish, Mr. Newell. :)
 #include <dlfcn.h>
 #include <string.h>
 
+#define TOUCH_YAW 220
+#define TOUCH_PITCH 90
+
 CTouchControls g_Touch;
 static CTouchDefaultButton g_DefaultButtons[64];
 static int g_LastDefaultButton = 0;
@@ -34,7 +37,6 @@ void CTouchControls::Init( )
 		return;
 
 	engine->GetScreenSize( screen_w, screen_h );
-	
 	void *touchlib = dlopen("libtouch.so",RTLD_LAZY);
 	void (*clientLoaded)(void) = (void (*)(void))dlsym( touchlib, "clientLoaded" );
 	clientLoaded();
@@ -90,7 +92,7 @@ void CTouchControls::Init( )
 	IN_TouchAddButton( "look", "", "", touch_look, 0.5, 0, 1, 1, -1, color );
 	IN_TouchAddButton( "move", "", "", touch_move, 0, 0, 0.5, 1, -1, color );
 
-	//IN_TouchAddButton( "menu", "", "escape", touch_command, 0.000000, 0.817778, 0.080000, 0.960000, -1, color );
+	//IN_TouchAddButton( "menu", "", "map test1", touch_command, 0.000000, 0.820000, 0.040000, 0.860000, -1, color );
 
 	Msg( "CTouchControls::Init()" );
 }
@@ -113,12 +115,12 @@ void CTouchControls::Paint( )
 	{
 		if( g_Buttons[i].type == touch_move || g_Buttons[i].type == touch_look )
 			continue;
-		g_pSurface->DrawSetColor(255, 255, 255, 155);
-		g_pSurface->DrawFilledRect(g_Buttons[i].x1, g_Buttons[i].y1, g_Buttons[i].x2, g_Buttons[i].y2);
+		g_pSurface->DrawSetColor(255, 0, 0, 155);
+		g_pSurface->DrawOutlinedRect(g_Buttons[i].x1, g_Buttons[i].y1, g_Buttons[i].x2, g_Buttons[i].y2);
 	
-		g_pSurface->DrawSetTexture( g_Buttons[i].textureID );
-       	 	g_pSurface->DrawSetColor(50,50,50,100);
-		g_pSurface->DrawTexturedRect( g_Buttons[i].x1, g_Buttons[i].y1, g_Buttons[i].x2, g_Buttons[i].y2 );
+		//g_pSurface->DrawSetTexture( g_Buttons[i].textureID );
+       	 	//g_pSurface->DrawSetColor(50,50,50,100);
+		//g_pSurface->DrawTexturedRect( g_Buttons[i].x1, g_Buttons[i].y1, g_Buttons[i].x2, g_Buttons[i].y2 );
 	}
 }
 
@@ -171,7 +173,6 @@ void CTouchControls::TouchMotion( event_t *ev )
 
 	LogPrintf( "TouchMotion, %f, %f", x, y );
 
-#if 0
 	for (int i = 0; i < g_LastButton; i++)
 	{
 		if( g_Buttons[i].finger == ev->fingerid )
@@ -228,11 +229,19 @@ void CTouchControls::TouchMotion( event_t *ev )
 			}
 			else if( g_Buttons[i].type == touch_look )
 			{
-
+				QAngle ang, newang;
+				engine->GetViewAngles( ang );
+				LogPrintf( "Angles %f, %f", ang.x, ang.y );
+				newang.y = ang.y + TOUCH_YAW * ( dx - x );
+				newang.x = ang.x - TOUCH_PITCH * ( dy - y );
+				newang.z = ang.z;
+				LogPrintf( "NewAngles %f, %f", newang.x, newang.y );
+				engine->SetViewAngles( newang );
+				dx = x;
+				dy = y;
 			}
 		}
 	}
-#endif
 }
 
 void CTouchControls::ButtonPress( event_t *ev )

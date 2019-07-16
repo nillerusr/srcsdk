@@ -160,7 +160,6 @@ private:
 	
 	float move_start_x, move_start_y;
 	float dx, dy;
-	float sx, sy;
 
 	bool w,a,s,d;
 	// editing
