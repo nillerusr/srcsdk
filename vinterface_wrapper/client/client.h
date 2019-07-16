@@ -88,7 +88,6 @@ typedef struct event_s
 	int x;
 	int y;
 	int fingerid;
-	int touchDevId;
 } event_t;
 
 class CTouchButton

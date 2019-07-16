@@ -76,7 +76,7 @@ void Android_RunEvents()
 	pthread_mutex_lock( &events.framemutex );
 }
 
-DLLEXPORT int TouchEvent( int touchDevId, int fingerid, int x, int y, int action )
+DLLEXPORT int TouchEvent( int fingerid, int x, int y, int action )
 {
 	event_t *ev = Android_AllocEvent();
 	switch( action )
@@ -89,7 +89,6 @@ DLLEXPORT int TouchEvent( int touchDevId, int fingerid, int x, int y, int action
 		break;
 		case ACTION_MOVE:
 			ev->type = event_touchmotion;
-			ev->touchDevId = touchDevId;
 		break;
 		default: break;
 	}
