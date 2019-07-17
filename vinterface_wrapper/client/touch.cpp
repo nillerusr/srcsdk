@@ -11,6 +11,10 @@ Please, don't punish, Mr. Newell. :)
 #include <dlfcn.h>
 #include <string.h>
 
+#define boundmax( num, high ) ( (num) < (high) ? (num) : (high) )
+#define boundmin( num, low )  ( (num) >= (low) ? (num) : (low)  )
+#define bound( low, num, high ) ( boundmin( boundmax(num, high), low ))
+
 #define TOUCH_YAW 120
 #define TOUCH_PITCH 90
 #define TOUCH_FORWARDZONE 0.06
@@ -48,6 +52,7 @@ void CTouchControls::Init( )
 	initialized = true;
 	btns.EnsureCapacity( 64 );
 	look_finger = move_finger = resize_finger = -1;
+	forward = side = 0;
 	scolor = rgba_t( -1, -1, -1, -1 );
 	state = state_none;
 	swidth = 1;
@@ -95,7 +100,7 @@ void CTouchControls::Init( )
 	IN_TouchAddButton( "look", "", "", touch_look, 0.5, 0, 1, 1, -1, color );
 	IN_TouchAddButton( "move", "", "", touch_move, 0, 0, 0.5, 1, -1, color );
 
-	IN_TouchAddButton( "menu", "", "map test1", touch_command, 0.000000, 0.820000, 0.040000, 0.860000, -1, color );
+	IN_TouchAddButton( "menu", "", "gameui_activate", touch_command, 0.000000, 0.817778, 0.080000, 0.960000, -1, color );
 
 	Msg( "CTouchControls::Init()" );
 }
@@ -107,6 +112,71 @@ void CTouchControls::VidInit( )
 
 void CTouchControls::Shutdown( )
 {
+}
+
+void CTouchControls::IN_Move()
+{
+	if( side > 0.9 && !a ) 
+	{
+		a = true;
+		engine->ClientCmd("+moveleft");
+	}
+	else if( a )
+	{
+		a = false;
+		engine->ClientCmd("-moveleft");
+	}
+
+	if( side < -0.9 && !d )
+	{
+		d = true;
+		engine->ClientCmd("+moveright");
+	}
+	else if( d )
+	{
+		d = false;
+		engine->ClientCmd("-moveright");
+	}
+
+	if( forward < -0.7 && !s )
+	{
+		s = true;
+		engine->ClientCmd("+back");
+	}
+	else if( s )
+	{
+		s = false;
+		engine->ClientCmd("-back");
+	}
+
+	if( forward > 0.7 && !w )
+	{
+		w = true;
+		engine->ClientCmd("+forward");
+	}
+	else if( w )
+	{
+		w = false;
+		engine->ClientCmd("-forward");
+	}
+}
+
+void CTouchControls::IN_Look()
+{
+	if( !pitch && !yaw )
+		return;
+	QAngle ang;
+	engine->GetViewAngles( ang );
+	ang.x += pitch;
+	ang.y += yaw;
+	engine->SetViewAngles( ang );
+	pitch = yaw = 0;
+}
+
+void CTouchControls::Frame()
+{
+	IN_Move();
+	IN_Look();
 }
 
 void CTouchControls::Paint( )
@@ -183,59 +253,16 @@ void CTouchControls::TouchMotion( event_t *ev )
 			if( g_Buttons[i].type == touch_move )
 			{
 				//LogPrintf( "TouchMotion, touch_move x:%f, y:%f, startx:%f, starty:%f", x, y, move_start_x, move_start_y );
-	
-				if( ( ( move_start_x - x ) / TOUCH_SIDEZONE ) > 0.9 && !a ) 
-				{
-					a = true;
-					engine->ClientCmd("+moveleft");
-				}
-				else if( a )
-				{
-					a = false;
-					engine->ClientCmd("-moveleft");
-				}
-
-				if( ( ( move_start_x - x ) / TOUCH_SIDEZONE ) < -0.9 && !d )
-				{
-					d = true;
-					engine->ClientCmd("+moveright");
-				}
-				else if( d )
-				{
-					d = false;
-					engine->ClientCmd("-moveright");
-				}
-
-				if( ( ( move_start_y - y ) / TOUCH_FORWARDZONE ) < -0.7 && !s )
-				{
-					s = true;
-					engine->ClientCmd("+back");
-				}
-				else if( s )
-				{
-					s = false;
-					engine->ClientCmd("-back");
-				}
-
-				if( ( ( move_start_y - y ) / TOUCH_FORWARDZONE ) > 0.7 && !w ) {
-					w = true;
-					engine->ClientCmd("+forward");
-				}
-				else if( w ) {
-					w = false;
-					engine->ClientCmd("-forward");
-				}
+				
+				forward = ( move_start_y - y ) / TOUCH_SIDEZONE;
+				side = ( move_start_x - x ) / TOUCH_SIDEZONE;
+				forward = bound( -1, forward, 1 );
+				side = bound( -1, side, 1 );
 			}
 			else if( g_Buttons[i].type == touch_look )
 			{
-				QAngle ang, newang;
-				engine->GetViewAngles( ang );
-				LogPrintf( "Angles %f, %f", ang.x, ang.y );
-				newang.y = ang.y + TOUCH_YAW * ( dx - x ) * SENSITIVITY;
-				newang.x = ang.x - TOUCH_PITCH * ( dy - y ) * SENSITIVITY;
-				newang.z = ang.z;
-				LogPrintf( "NewAngles %f, %f", newang.x, newang.y );
-				engine->SetViewAngles( newang );
+				yaw += TOUCH_YAW * ( dx - x ) * SENSITIVITY;
+				pitch -= TOUCH_PITCH * ( dy - y ) * SENSITIVITY;
 				dx = x;
 				dy = y;
 			}
@@ -291,6 +318,7 @@ void CTouchControls::ButtonPress( event_t *ev )
 
 				if( g_Buttons[i].type == touch_move )
 				{
+					forward = side = 0;
 					if( w ) { engine->ClientCmd("-forward"); }
 					if( a ) { engine->ClientCmd("-moveleft"); }
 					if( s ) { engine->ClientCmd("-back"); }

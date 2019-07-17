@@ -141,10 +141,12 @@ public:
 	void Shutdown( );
 	
 	void Paint( );
-	
+	void Frame( );
+
 	void IN_TouchAddDefaultButton( const char *name, const char *texturefile, const char *command, float x1, float y1, float x2, float y2, rgba_t color, ETouchRound round, float aspect, int flags );
 	void IN_TouchAddButton( const char *name, const char *texturefile, const char *command, ETouchButtonType type, float x1, float y1, float x2, float y2, int fingerid, rgba_t color );
-
+	void IN_Move( );
+	void IN_Look( );
 	void ButtonPress( event_t *ev );
 	void TouchMotion( event_t *ev );
 private:
@@ -154,7 +156,8 @@ private:
 	
 	int look_finger;
 	int move_finger;
-	
+	float forward, side;
+	float yaw, pitch;
 	CTouchButton *move;
 	
 	float move_start_x, move_start_y;

@@ -129,12 +129,14 @@ public:
 	
 	virtual void					HudProcessInput( bool bActive )
 	{
-		Android_RunEvents();
 		return realClientDLL->HudProcessInput( bActive );
 	}
 	
 	virtual void					HudUpdate( bool bActive )
 	{
+		g_Touch.Frame();
+		Android_RunEvents();
+
 		return realClientDLL->HudUpdate( bActive );
 	}
 	
