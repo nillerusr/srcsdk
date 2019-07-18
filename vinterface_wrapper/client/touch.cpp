@@ -265,6 +265,9 @@ void CTouchControls::IN_TouchAddButton( const char *name, const char *texturefil
 
 void CTouchControls::TouchMotion( event_t *ev )
 {
+	if( enginevgui->IsGameUIVisible() )
+		return;
+
 	float x = (float)ev->x / screen_w;
 	float y = (float)ev->y / screen_h;
 
@@ -298,68 +301,95 @@ void CTouchControls::ButtonPress( event_t *ev )
 {
 	if( ev->type == event_touchdown )
 	{
-		for (int i = 0; i < g_LastButton; i++)
-		{
-			if(  ev->x > g_Buttons[i].x1 && ev->x < g_Buttons[i].x2 && ev->y > g_Buttons[i].y1 && ev->y < g_Buttons[i].y2 )
+		if( enginevgui->IsGameUIVisible() )
+		{ //buttons in menu
+			for (int i = 0; i < g_LastDefaultButton; i++)
 			{
-				g_Buttons[i].finger = ev->fingerid;
-				if( g_Buttons[i].type == touch_move  )
+				if(  ev->x > g_DefaultButtons[i].x1 && ev->x < g_DefaultButtons[i].x2 && ev->y > g_DefaultButtons[i].y1 && ev->y < g_DefaultButtons[i].y2 )
 				{
-					if( move_finger == -1 )
+					g_DefaultButtons[i].finger = ev->fingerid;
+					// KeyDown here
+				}
+			}
+		}
+		else
+		{
+			for (int i = 0; i < g_LastButton; i++)
+			{
+				if(  ev->x > g_Buttons[i].x1 && ev->x < g_Buttons[i].x2 && ev->y > g_Buttons[i].y1 && ev->y < g_Buttons[i].y2 )
+				{
+					g_Buttons[i].finger = ev->fingerid;
+					if( g_Buttons[i].type == touch_move  )
 					{
-						move_start_x = (float)ev->x / screen_w;
-						move_start_y = (float)ev->y / screen_h;
-						move_finger = ev->fingerid;
+						if( move_finger == -1 )
+						{
+							move_start_x = (float)ev->x / screen_w;
+							move_start_y = (float)ev->y / screen_h;
+							move_finger = ev->fingerid;
+						}
+						else
+							g_Buttons[i].finger = move_finger;
+					}
+					else if( g_Buttons[i].type == touch_look )
+					{
+						if( look_finger == -1 )
+						{
+							dx = (float)ev->x / screen_w;
+							dy = (float)ev->y / screen_h;
+							look_finger = ev->fingerid;
+						}
+						else
+							g_Buttons[i].finger = look_finger;
 					}
 					else
-						g_Buttons[i].finger = move_finger;
-				}
-				else if( g_Buttons[i].type == touch_look )
-				{
-					if( look_finger == -1 )
 					{
-						dx = (float)ev->x / screen_w;
-						dy = (float)ev->y / screen_h;
-						look_finger = ev->fingerid;
+						engine->ClientCmd( g_Buttons[i].command );
 					}
-					else
-						g_Buttons[i].finger = look_finger;
-				}
-				else
-				{
-					engine->ClientCmd( g_Buttons[i].command );
 				}
 			}
 		}
 	}
 	else if( ev->type == event_touchup )
 	{
-		for (int i = 0; i < g_LastButton; i++)
-		{
-			if( g_Buttons[i].finger == ev->fingerid )
+		if( enginevgui->IsGameUIVisible() )
+		{ //buttons in menu
+			for (int i = 0; i < g_LastDefaultButton; i++)
 			{
-				g_Buttons[i].finger = -1;
-
-				if( g_Buttons[i].type == touch_move )
+				if( g_DefaultButtons[i].finger == ev->fingerid )
 				{
-					forward = side = 0;
-					if( w ) { engine->ClientCmd("-forward"); }
-					if( a ) { engine->ClientCmd("-moveleft"); }
-					if( s ) { engine->ClientCmd("-back"); }
-					if( d ) { engine->ClientCmd("-moveright"); }
-					move_finger = -1;
+					g_DefaultButtons[i].finger = -1;
+					//KeyUp Here
 				}
-				else if( g_Buttons[i].type == touch_look )
-					look_finger = -1;
-				else if( g_Buttons[i].command[0] == '+' )
+			}
+		}
+		else
+		{
+			for (int i = 0; i < g_LastButton; i++)
+			{
+				if( g_Buttons[i].finger == ev->fingerid )
 				{
-					char cmd[256];
-					snprintf( cmd, sizeof cmd, "%s", g_Buttons[i].command );
-					cmd[0] = '-';
-					engine->ClientCmd( cmd );
+					g_Buttons[i].finger = -1;
+
+					if( g_Buttons[i].type == touch_move )
+					{
+						forward = side = 0;
+						if( w ) { engine->ClientCmd("-forward"); }
+						if( a ) { engine->ClientCmd("-moveleft"); }
+						if( s ) { engine->ClientCmd("-back"); }
+						if( d ) { engine->ClientCmd("-moveright"); }
+						move_finger = -1;
+					}
+					else if( g_Buttons[i].type == touch_look )
+						look_finger = -1;
+					else if( g_Buttons[i].command[0] == '+' )
+					{
+						char cmd[256];
+						snprintf( cmd, sizeof cmd, "%s", g_Buttons[i].command );
+						cmd[0] = '-';
+						engine->ClientCmd( cmd );
+					}
 				}
 			}
 		}
 	}
 }
-

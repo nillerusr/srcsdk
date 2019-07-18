@@ -128,6 +128,7 @@ public:
 	rgba_t color;
 	ETouchRound round;
 	float aspect;
+	int finger;
 	int flags;
 	int textureID;
 };
