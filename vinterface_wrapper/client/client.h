@@ -36,7 +36,7 @@ extern IInputSystem		*inputsystem;
 extern IGameUI			*gameui;
 extern vgui::ISurface		*g_pSurface;
 extern vgui::IScheme 		*g_pScheme;
-extern vgui::IInputInternal 	*g_pInputInternal;
+extern vgui::IInputInternal *g_pInputInternal;
 
 enum ETouchButtonType
 {
@@ -123,7 +123,7 @@ class CTouchDefaultButton
 public:
 	char name[32];
 	char texturefile[256];
-	char command[256];
+	vgui::KeyCode command;
 	float x1, y1, x2, y2;
 	rgba_t color;
 	ETouchRound round;
@@ -147,7 +147,7 @@ public:
 	void Paint( );
 	void Frame( );
 
-	void IN_TouchAddDefaultButton( const char *name, const char *texturefile, const char *command, float x1, float y1, float x2, float y2, rgba_t color, ETouchRound round, float aspect, int flags );
+	void IN_TouchAddDefaultButton( const char *name, const char *texturefile, vgui::KeyCode command, float x1, float y1, float x2, float y2, rgba_t color, ETouchRound round, float aspect, int flags );
 	void IN_TouchAddButton( const char *name, const char *texturefile, const char *command, ETouchButtonType type, float x1, float y1, float x2, float y2, int fingerid, rgba_t color );
 	void IN_Move( );
 	void IN_Look( );
