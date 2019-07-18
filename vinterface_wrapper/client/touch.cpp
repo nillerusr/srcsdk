@@ -61,7 +61,10 @@ void CTouchControls::Init( )
 	clientonly = false;
 	precision = false;
 
-	//textfont = g_pScheme->GetFont( "Default" );
+	overlayPanel = new COverlayPanel(NULL, "OverlayPanel");
+	overlayPanel->SetParent(enginevgui->GetPanel(PANEL_GAMEUIDLL));
+	overlayPanel->SetVisible(true);
+	overlayPanel->MoveToFront();
 	
 	move_start_x = move_start_y = 0.0f;
 
@@ -72,18 +75,13 @@ void CTouchControls::Init( )
 	rgba_t color(255, 255, 255, 255);
 
 	// buttons
-/*
-	IN_TouchAddDefaultButton( "Y", "", "XB_Y", 50, 0, 100, 50, color, round_none, 0, 0 );
-	IN_TouchAddDefaultButton( "X", "", "XB_X", 0, 60, 50, 110, color, round_none, 0, 0 );	
-	IN_TouchAddDefaultButton( "A", "", "XB_A", 50, 120, 100, 170, color, round_none, 0, 0 );	
-	IN_TouchAddDefaultButton( "B", "", "XB_B", 100, 60, 150, 110, color, round_none, 0, 0 );	
+	IN_TouchAddDefaultButton( "down", "", "D_DOWN", 0.760000, 0.782222, 0.880000, 0.995556, color, round_none, 0, 0 );
+	IN_TouchAddDefaultButton( "left", "", "D_LEFT", 0.640000, 0.568889, 0.760000, 0.782222, color, round_none, 0, 0 );
+	IN_TouchAddDefaultButton( "up", "", "D_UP", 0.760000, 0.355556, 0.880000, 0.568889, color, round_none, 0, 0 );
+	IN_TouchAddDefaultButton( "right", "", "D_RIGHT", 0.880000, 0.568889, 1.000000, 0.782222, color, round_none, 0, 0 );
+	IN_TouchAddDefaultButton( "A", "", "XB_A", 0.640000, 0.355556, 0.740000, 0.533333, color, round_none, 0, 0 );
+	IN_TouchAddDefaultButton( "B", "", "XB_B", 0.900000, 0.355556, 1.000000, 0.533333, color, round_none, 0, 0 );
 
-	// dpad
-	IN_TouchAddDefaultButton( "UP", "", "D_UP", 300, 0, 350, 50, color, round_none, 0, 0 );
-	IN_TouchAddDefaultButton( "LEFT", "", "D_LEFT", 250, 60, 300, 110, color, round_none, 0, 0 );	
-	IN_TouchAddDefaultButton( "DOWN", "", "D_DOWN", 300, 120, 350, 170, color, round_none, 0, 0 );	
-	IN_TouchAddDefaultButton( "RIGHT", "", "D_RIGHT", 350, 60, 400, 110, color, round_none, 0, 0 );	
-*/
 
 	IN_TouchAddButton( "invnext", "", "invnext", touch_command, 0.000000, 0.533333, 0.120000, 0.746667, -1, color );
 	IN_TouchAddButton( "invprev", "", "invprev", touch_command, 0.000000, 0.071111, 0.120000, 0.284444, -1, color );
@@ -175,8 +173,16 @@ void CTouchControls::IN_Look()
 
 void CTouchControls::Frame()
 {
+	if (!initialized)
+		return;
+
 	IN_Move();
 	IN_Look();
+
+	if ( enginevgui->IsGameUIVisible() )
+		overlayPanel->SetParent(enginevgui->GetPanel(PANEL_GAMEUIDLL));
+	else
+		overlayPanel->SetParent(enginevgui->GetPanel(PANEL_CLIENTDLL));
 }
 
 void CTouchControls::Paint( )
@@ -184,31 +190,49 @@ void CTouchControls::Paint( )
 	if (!initialized)
 		return;
 
-	for (int i = 0; i < g_LastButton; i++)
+	if ( enginevgui->IsGameUIVisible() )
 	{
-		if( g_Buttons[i].type == touch_move || g_Buttons[i].type == touch_look )
-			continue;
-		g_pSurface->DrawSetColor(255, 0, 0, 155);
-		g_pSurface->DrawOutlinedRect(g_Buttons[i].x1, g_Buttons[i].y1, g_Buttons[i].x2, g_Buttons[i].y2);
+		overlayPanel->SetParent(enginevgui->GetPanel(PANEL_GAMEUIDLL));
+
+		for (int i = 0; i < g_LastDefaultButton; i++)
+		{
+			g_pSurface->DrawSetColor(255, 0, 0, 155);
+			g_pSurface->DrawOutlinedRect(g_DefaultButtons[i].x1, g_DefaultButtons[i].y1, g_DefaultButtons[i].x2, g_DefaultButtons[i].y2);
 	
-		//g_pSurface->DrawSetTexture( g_Buttons[i].textureID );
-       	 	//g_pSurface->DrawSetColor(50,50,50,100);
-		//g_pSurface->DrawTexturedRect( g_Buttons[i].x1, g_Buttons[i].y1, g_Buttons[i].x2, g_Buttons[i].y2 );
+			//g_pSurface->DrawSetTexture( g_Buttons[i].textureID );
+			//g_pSurface->DrawSetColor(50,50,50,100);
+			//g_pSurface->DrawTexturedRect( g_Buttons[i].x1, g_Buttons[i].y1, g_Buttons[i].x2, g_Buttons[i].y2 );
+		}
+	}
+	else
+	{
+		for (int i = 0; i < g_LastButton; i++)
+		{
+			if( g_Buttons[i].type == touch_move || g_Buttons[i].type == touch_look )
+				continue;
+
+			g_pSurface->DrawSetColor(255, 0, 0, 155);
+			g_pSurface->DrawOutlinedRect(g_Buttons[i].x1, g_Buttons[i].y1, g_Buttons[i].x2, g_Buttons[i].y2);
+
+			//g_pSurface->DrawSetTexture( g_Buttons[i].textureID );
+		 	//g_pSurface->DrawSetColor(50,50,50,100);
+			//g_pSurface->DrawTexturedRect( g_Buttons[i].x1, g_Buttons[i].y1, g_Buttons[i].x2, g_Buttons[i].y2 );
+		}
 	}
 }
 
 void CTouchControls::IN_TouchAddDefaultButton( const char *name, const char *texturefile, const char *command, float x1, float y1, float x2, float y2, rgba_t color, ETouchRound round, float aspect, int flags )
 {
-	if( g_LastDefaultButton >= 255 )
+	if( g_LastDefaultButton >= 64 )
 		return;
 
 	strncpy( g_DefaultButtons[g_LastDefaultButton].name, name, 32 );
 	strncpy( g_DefaultButtons[g_LastDefaultButton].texturefile, texturefile, 256 );
 	strncpy( g_DefaultButtons[g_LastDefaultButton].command, command, 256 );
-	g_DefaultButtons[g_LastDefaultButton].x1 = x1;
-	g_DefaultButtons[g_LastDefaultButton].y1 = y1;
-	g_DefaultButtons[g_LastDefaultButton].x2 = x2;
-	g_DefaultButtons[g_LastDefaultButton].y2 = y2;
+	g_DefaultButtons[g_LastDefaultButton].x1 =  (int)(x1*screen_w);
+	g_DefaultButtons[g_LastDefaultButton].y1 =  (int)(y1*screen_h);
+	g_DefaultButtons[g_LastDefaultButton].x2 =  (int)(x2*screen_w);
+	g_DefaultButtons[g_LastDefaultButton].y2 =  (int)(y2*screen_h);
 	g_DefaultButtons[g_LastDefaultButton].color = color;
 	g_DefaultButtons[g_LastDefaultButton].round = round;
 	g_DefaultButtons[g_LastDefaultButton].aspect = aspect;
@@ -338,3 +362,4 @@ void CTouchControls::ButtonPress( event_t *ev )
 		}
 	}
 }
+

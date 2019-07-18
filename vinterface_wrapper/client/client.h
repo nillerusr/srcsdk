@@ -20,6 +20,8 @@ Please, don't punish, Mr. Newell. :)
 #include "vgui/ISurface.h"
 #include "vgui/IInputInternal.h"
 #include "vgui/IScheme.h"
+#include "vgui/KeyCode.h"
+#include "OverlayPanel.h"
 
 extern IBaseClientDLL *realClientDLL; // real client implementation
 extern IBaseClientDLL *wrapClientDLL; // wrapper class
@@ -34,6 +36,7 @@ extern IInputSystem		*inputsystem;
 extern IGameUI			*gameui;
 extern vgui::ISurface		*g_pSurface;
 extern vgui::IScheme 		*g_pScheme;
+extern vgui::IInputInternal 	*g_pInputInternal;
 
 enum ETouchButtonType
 {
@@ -41,7 +44,7 @@ enum ETouchButtonType
 	touch_move,    // Like a joystick stick.
 	touch_joy,     // Like a joystick stick, centered.
 	touch_dpad,    // Only two directions.
-	touch_look     // Like a touchpad.
+	touch_look,     // Like a touchpad.
 };
 
 enum ETouchState
@@ -181,6 +184,7 @@ private:
 	int joytexture; // touch indicator
 	bool configchanged;
 	vgui::HFont textfont;
+	COverlayPanel *overlayPanel;
 };
 
 extern CTouchControls g_Touch;
@@ -188,3 +192,4 @@ extern CTouchControls g_Touch;
 void Android_RunEvents();
 
 // TODO: InputSystem communication and faking mouse/gamepad
+

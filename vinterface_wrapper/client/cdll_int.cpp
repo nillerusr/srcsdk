@@ -16,17 +16,22 @@ Please, don't punish, Mr. Newell. :)
 #include "filesystem.h"
 #include "miniSDL.h"
 #include "vmthook.h"
+#include "funutils.h"
 
 IBaseClientDLL *realClientDLL;
 
 vgui::IPanel *g_pPanel = NULL;
 vgui::ISurface *g_pSurface = NULL;
+vgui::IScheme *g_pScheme = NULL;
+vgui::IInputInternal *g_pInputInternal = NULL;
 
 // we don't provide own full implementation of VClient017, so we need wrap it
 // we also provide ourselves as "libclient.so", so real library was moved to "libclient_original.so"
 GET_INTERFACE_PTR( Client, "libclient_original.so", CLIENT_DLL_INTERFACE_VERSION, &realClientDLL );
 GET_INTERFACE_PTR( VGUI2, "libvgui2.so", VGUI_PANEL_INTERFACE_VERSION, &g_pPanel );
 GET_INTERFACE_PTR( VGUI_Matsurface, "libvguimatsurface.so", VGUI_SURFACE_INTERFACE_VERSION, &g_pSurface );
+GET_INTERFACE_PTR( VGUI_Scheme, "libvgui2.so", VGUI_SCHEME_INTERFACE_VERSION, &g_pScheme );
+GET_INTERFACE_PTR( VGUI_InputInternal, "libvgui2.so", VGUI_INPUTINTERNAL_INTERFACE_VERSION , &g_pInputInternal );
 
 // this is required when wrapping client for some reason
 WRAP_MODULE( GameUI, "libGameUI.so" ); 
@@ -36,21 +41,6 @@ IFileSystem *filesystem = NULL;
 IEngineVGui *enginevgui = NULL;
 IGameUIFuncs *gameuifuncs = NULL;
 IInputSystem *inputsystem = NULL;
-
-VMT* panelVMT = NULL;
-
-int texId;
-
-typedef void (*PaintTraverseFn) (void*, vgui::VPANEL, bool, bool);
-void PaintTraverse(void *_this, vgui::VPANEL panel, bool forceRepaint, bool allowForce)
-{
-	if (strstr(g_pPanel->GetName(panel), "MatSystemTopPanel"))
-	{
-		g_Touch.Paint();
-	}
-
-	panelVMT->GetOriginalMethod<PaintTraverseFn>(42)(_this, panel, forceRepaint, allowForce);
-}
 
 class CWrapClient : public IBaseClientDLL
 {
@@ -69,16 +59,15 @@ public:
 			return false;
 		
 		LogPrintf( "Hello from CWrapClient. Running on %s, ver. %i", engine->GetProductVersionString(), engine->GetEngineBuildNumber() );
-		engine->ClientCmd("echo Meow");
-		engine->ClientCmd("con_enable 1");
-		engine->ClientCmd("mat_picmip 2");
-		engine->ClientCmd("r_shadows 0");
+
+		// connect tier libs for vgui_controls
+		ConnectTier1Libraries( &appSystemFactory, 1 );
+		ConnectTier2Libraries( &appSystemFactory, 1 );
+		ConnectTier3Libraries( &appSystemFactory, 1 );
+
+		// VGui_InitInterfacesList();
 
 		g_Touch.Init();
-
-		panelVMT = new VMT(g_pPanel);
-		panelVMT->HookVM((void*)PaintTraverse, 42);		
-		panelVMT->ApplyVMT();
 
 		return realClientDLL->Init( appSystemFactory, physicsFactory, pGlobals );
 	}

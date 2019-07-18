@@ -100,3 +100,4 @@ DLLEXPORT int TouchEvent( int fingerid, int x, int y, int action )
 
 	Android_PushEvent();
 }
+
