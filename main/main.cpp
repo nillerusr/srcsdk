@@ -16,6 +16,7 @@
 char libraryPath[512];
 
 const char *LauncherArgv[512];
+char javaArgv[2048];
 char startArgs[256][128];
 int iLastArgs = 0;
 
@@ -137,6 +138,11 @@ void SetArg( const char *arg )
 		iLastArgs++;
 		pch = strtok (NULL, " ");
 	}
+}
+
+DLLEXPORT int Java_com_valvesoftware_ValveActivity2_setArgs(JNIEnv *env, jclass *clazz, jstring str)
+{
+	snprintf( javaArgv, sizeof javaArgv, env->GetStringUTFChars(str, NULL) );
 }
 
 void SetStartArgs()
@@ -342,6 +348,7 @@ DLLEXPORT int Java_org_libsdl_app_SDLActivity_nativeInit(JNIEnv *env, jclass cls
 
 	SetRenderer();
 	SetStartArgs();
+	SetArg(javaArgv);
 
 	void *engineHandle = dlopen("libengine.so", 0);
 	LogPrintf("engineHandle: 0x%X", engineHandle);
