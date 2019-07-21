@@ -10,8 +10,8 @@
 #include <string.h>
 #include <EGL/egl.h>
 #include "jni.h"
+#include "IAppSystem.h"
 #include "wrapper.h"
-#include "../../public/appframework/IAppSystem.h"
 
 char libraryPath[512];
 
