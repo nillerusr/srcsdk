@@ -24,7 +24,7 @@ Please, don't punish, Mr. Newell. :)
 #define SENSITIVITY 2
 
 CTouchControls g_Touch;
-static CTouchDefaultButton g_DefaultButtons[64];
+static CTouchButton g_DefaultButtons[64];
 static int g_LastDefaultButton = 0;
 int screen_h, screen_w;
 
@@ -67,7 +67,7 @@ void CTouchControls::Init( )
 	overlayPanel->SetParent(enginevgui->GetPanel(PANEL_GAMEUIDLL));
 	overlayPanel->SetVisible(true);
 	overlayPanel->MoveToFront();
-	
+
 	move_start_x = move_start_y = 0.0f;
 
 	// textures
@@ -77,13 +77,13 @@ void CTouchControls::Init( )
 	rgba_t color(255, 255, 255, 255);
 
 	// buttons
-	IN_TouchAddDefaultButton( "down", "", KEY_XBUTTON_DOWN, 0.760000, 0.782222, 0.880000, 0.995556, color, round_none, 0, 0 );
-	IN_TouchAddDefaultButton( "left", "", KEY_XBUTTON_LEFT, 0.640000, 0.568889, 0.760000, 0.782222, color, round_none, 0, 0 );
-	IN_TouchAddDefaultButton( "up", "", KEY_XBUTTON_UP, 0.760000, 0.355556, 0.880000, 0.568889, color, round_none, 0, 0 );
-	IN_TouchAddDefaultButton( "right", "", KEY_XBUTTON_RIGHT, 0.880000, 0.568889, 1.000000, 0.782222, color, round_none, 0, 0 );
-	IN_TouchAddDefaultButton( "A", "", KEY_XBUTTON_A, 0.640000, 0.355556, 0.740000, 0.533333, color, round_none, 0, 0 );
-	IN_TouchAddDefaultButton( "B", "", KEY_XBUTTON_B, 0.900000, 0.355556, 1.000000, 0.533333, color, round_none, 0, 0 );
-
+	IN_TouchAddDefaultButton( "down", "", "", KEY_XBUTTON_DOWN, touch_key, 0.760000, 0.782222, 0.880000, 0.995556, color, 0, 0 );
+	IN_TouchAddDefaultButton( "left", "", "", KEY_XBUTTON_LEFT, touch_key, 0.640000, 0.568889, 0.760000, 0.782222, color, 0, 0 );
+	IN_TouchAddDefaultButton( "up", "", "", KEY_XBUTTON_UP, touch_key, 0.760000, 0.355556, 0.880000, 0.568889, color, 0, 0 );
+	IN_TouchAddDefaultButton( "right", "", "", KEY_XBUTTON_RIGHT, touch_key, 0.880000, 0.568889, 1.000000, 0.782222, color, 0, 0 );
+	IN_TouchAddDefaultButton( "A", "", "", KEY_XBUTTON_A, touch_key, 0.640000, 0.355556, 0.740000, 0.533333, color, 0, 0 );
+	IN_TouchAddDefaultButton( "B", "", "", KEY_XBUTTON_B, touch_key, 0.900000, 0.355556, 1.000000, 0.533333, color, 0, 0 );
+	IN_TouchAddDefaultButton( "console", "", "toggleconsole", KEY_NONE, touch_command, 0.920000, 0, 1.000000, 0.1422222, color, 0, 0 );
 
 	IN_TouchAddButton( "invnext", "", "invnext", touch_command, 0.000000, 0.533333, 0.120000, 0.746667, -1, color );
 	IN_TouchAddButton( "invprev", "", "invprev", touch_command, 0.000000, 0.071111, 0.120000, 0.284444, -1, color );
@@ -216,20 +216,21 @@ void CTouchControls::Paint( )
 	}
 }
 
-void CTouchControls::IN_TouchAddDefaultButton( const char *name, const char *texturefile, vgui::KeyCode command, float x1, float y1, float x2, float y2, rgba_t color, ETouchRound round, float aspect, int flags )
+void CTouchControls::IN_TouchAddDefaultButton( const char *name, const char *texturefile, const char *command, vgui::KeyCode key, ETouchButtonType type, float x1, float y1, float x2, float y2, rgba_t color, float aspect, int flags )
 {
 	if( g_LastDefaultButton >= 64 )
 		return;
 
 	strncpy( g_DefaultButtons[g_LastDefaultButton].name, name, 32 );
 	strncpy( g_DefaultButtons[g_LastDefaultButton].texturefile, texturefile, 256 );
-	g_DefaultButtons[g_LastDefaultButton].command = command;
+	strncpy( g_DefaultButtons[g_LastDefaultButton].command, command, 256 );
+	g_DefaultButtons[g_LastDefaultButton].key = key;
 	g_DefaultButtons[g_LastDefaultButton].x1 =  (int)(x1*screen_w);
 	g_DefaultButtons[g_LastDefaultButton].y1 =  (int)(y1*screen_h);
 	g_DefaultButtons[g_LastDefaultButton].x2 =  (int)(x2*screen_w);
 	g_DefaultButtons[g_LastDefaultButton].y2 =  (int)(y2*screen_h);
 	g_DefaultButtons[g_LastDefaultButton].color = color;
-	g_DefaultButtons[g_LastDefaultButton].round = round;
+	g_DefaultButtons[g_LastDefaultButton].type = type;
 	g_DefaultButtons[g_LastDefaultButton].aspect = aspect;
 	g_DefaultButtons[g_LastDefaultButton].flags = flags;
 	g_DefaultButtons[g_LastDefaultButton].textureID = g_pSurface->CreateNewTextureID();
@@ -275,7 +276,7 @@ void CTouchControls::TouchMotion( event_t *ev )
 			if( g_Buttons[i].type == touch_move )
 			{
 				//LogPrintf( "TouchMotion, touch_move x:%f, y:%f, startx:%f, starty:%f", x, y, move_start_x, move_start_y );
-				
+
 				forward = ( move_start_y - y ) / TOUCH_SIDEZONE;
 				side = ( move_start_x - x ) / TOUCH_SIDEZONE;
 				forward = bound( -1, forward, 1 );
@@ -303,7 +304,10 @@ void CTouchControls::ButtonPress( event_t *ev )
 				if(  ev->x > g_DefaultButtons[i].x1 && ev->x < g_DefaultButtons[i].x2 && ev->y > g_DefaultButtons[i].y1 && ev->y < g_DefaultButtons[i].y2 )
 				{
 					g_DefaultButtons[i].finger = ev->fingerid;
-					g_pInputInternal->InternalKeyCodePressed(g_DefaultButtons[i].command);
+					if( g_DefaultButtons[i].type == touch_key )
+						g_pInputInternal->InternalKeyCodePressed(g_DefaultButtons[i].key);
+					else if( g_DefaultButtons[i].type == touch_command )
+						engine->ClientCmd( g_DefaultButtons[i].command );
 				}
 			}
 		}
@@ -353,7 +357,8 @@ void CTouchControls::ButtonPress( event_t *ev )
 				if( g_DefaultButtons[i].finger == ev->fingerid )
 				{
 					g_DefaultButtons[i].finger = -1;
-					g_pInputInternal->InternalKeyCodeReleased(g_DefaultButtons[i].command);
+					if( g_DefaultButtons[i].type == touch_key )
+						g_pInputInternal->InternalKeyCodeReleased(g_DefaultButtons[i].key);
 				}
 			}
 		}

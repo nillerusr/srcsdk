@@ -45,6 +45,7 @@ enum ETouchButtonType
 	touch_joy,     // Like a joystick stick, centered.
 	touch_dpad,    // Only two directions.
 	touch_look,     // Like a touchpad.
+	touch_key
 };
 
 enum ETouchState
@@ -104,6 +105,7 @@ public:
 	
 	// Button texture
 	int texture;
+	vgui::KeyCode key;
 	
 	rgba_t color;
 	char texturefile[256];
@@ -147,7 +149,7 @@ public:
 	void Paint( );
 	void Frame( );
 
-	void IN_TouchAddDefaultButton( const char *name, const char *texturefile, vgui::KeyCode command, float x1, float y1, float x2, float y2, rgba_t color, ETouchRound round, float aspect, int flags );
+	void IN_TouchAddDefaultButton( const char *name, const char *texturefile, const char *command, vgui::KeyCode key, ETouchButtonType type, float x1, float y1, float x2, float y2, rgba_t color, float aspect, int flags );
 	void IN_TouchAddButton( const char *name, const char *texturefile, const char *command, ETouchButtonType type, float x1, float y1, float x2, float y2, int fingerid, rgba_t color );
 	void IN_Move( );
 	void IN_Look( );
