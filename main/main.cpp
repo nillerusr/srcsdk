@@ -159,7 +159,7 @@ void SetStartArgs()
 			"+mat_antialias 0 "
 			"-mat_antialias 0 "
 			"+r_flashlightdepthtexture 1 "
-			"+gl_dropmips 0 "
+			"+gl_dropmips 1 "
 			"+cc_lang english "
 			"-insecure");
 
