@@ -118,14 +118,17 @@ public:
 	
 	virtual void					HudProcessInput( bool bActive )
 	{
+		if( enginevgui->IsGameUIVisible() )
+		{
+			g_Touch.overlayPanel->SetParent(enginevgui->GetPanel(PANEL_GAMEUIDLL));
+			Android_RunEvents();
+		}
+
 		return realClientDLL->HudProcessInput( bActive );
 	}
 	
 	virtual void					HudUpdate( bool bActive )
 	{
-		g_Touch.Frame();
-		Android_RunEvents();
-
 		return realClientDLL->HudUpdate( bActive );
 	}
 	
@@ -180,6 +183,16 @@ public:
 	// Create movement command
 	virtual void					CreateMove ( int sequence_number, float input_sample_frametime, bool active )
 	{
+		if( !enginevgui->IsGameUIVisible() )
+		{
+			g_Touch.overlayPanel->SetParent(enginevgui->GetPanel(PANEL_CLIENTDLL));
+			if( engine->IsInGame() )
+			{
+				Android_RunEvents();
+				g_Touch.Frame();
+			}
+		}
+
 		realClientDLL->CreateMove( sequence_number, input_sample_frametime, active );
 	}
 	

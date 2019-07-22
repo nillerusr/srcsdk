@@ -153,6 +153,8 @@ public:
 	void IN_Look( );
 	void ButtonPress( event_t *ev );
 	void TouchMotion( event_t *ev );
+
+	COverlayPanel *overlayPanel;
 private:
 	bool initialized;
 	ETouchState state;
@@ -185,7 +187,6 @@ private:
 	int joytexture; // touch indicator
 	bool configchanged;
 	vgui::HFont textfont;
-	COverlayPanel *overlayPanel;
 };
 
 extern CTouchControls g_Touch;

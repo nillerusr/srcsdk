@@ -180,11 +180,6 @@ void CTouchControls::Frame()
 
 	IN_Move();
 	IN_Look();
-
-	if ( enginevgui->IsGameUIVisible() )
-		overlayPanel->SetParent(enginevgui->GetPanel(PANEL_GAMEUIDLL));
-	else
-		overlayPanel->SetParent(enginevgui->GetPanel(PANEL_CLIENTDLL));
 }
 
 void CTouchControls::Paint( )
@@ -194,13 +189,11 @@ void CTouchControls::Paint( )
 
 	if ( enginevgui->IsGameUIVisible() )
 	{
-		overlayPanel->SetParent(enginevgui->GetPanel(PANEL_GAMEUIDLL));
-
 		for (int i = 0; i < g_LastDefaultButton; i++)
 		{
 			g_pSurface->DrawSetColor(255, 0, 0, 155);
 			g_pSurface->DrawOutlinedRect(g_DefaultButtons[i].x1, g_DefaultButtons[i].y1, g_DefaultButtons[i].x2, g_DefaultButtons[i].y2);
-	
+
 			//g_pSurface->DrawSetTexture( g_Buttons[i].textureID );
 			//g_pSurface->DrawSetColor(50,50,50,100);
 			//g_pSurface->DrawTexturedRect( g_Buttons[i].x1, g_Buttons[i].y1, g_Buttons[i].x2, g_Buttons[i].y2 );
