@@ -13,7 +13,7 @@
 #include "IAppSystem.h"
 #include "wrapper.h"
 
-char libraryPath[512];
+char dataDir[512];
 
 const char *LauncherArgv[512];
 char javaArgv[2048];
@@ -47,7 +47,7 @@ DLLEXPORT void Java_com_valvesoftware_ValveActivity2_nativeOnActivityResult()
 DLLEXPORT void Java_com_valvesoftware_ValveActivity2_setNativeLibPath(JNIEnv *env, jclass *clazz, jstring str)
 {
 	__android_log_print( ANDROID_LOG_DEBUG, "SourceSDK2013", "Java_com_valvesoftware_ValveActivity_setNativeLibPath" );
-//	snprintf(libraryPath, sizeof libraryPath, env->GetStringUTFChars(str, NULL));
+//	snprintf(dataDir, sizeof dataDir, env->GetStringUTFChars(str, NULL));
 }
 DLLEXPORT void Java_com_valvesoftware_ValveActivity2_setLanguage()
 {
@@ -70,7 +70,7 @@ DLLEXPORT int Java_com_valvesoftware_ValveActivity2_saveGame()
 DLLEXPORT int Java_com_valvesoftware_ValveActivity2_setDataDirectoryPath(JNIEnv *env, jclass *clazz, jstring str)
 {
 	__android_log_print( ANDROID_LOG_DEBUG, "SourceSDK2013", "Java_com_valvesoftware_ValveActivity_setDataDirectoryPath" );
-	snprintf(libraryPath, sizeof libraryPath, env->GetStringUTFChars(str, NULL));
+	snprintf(dataDir, sizeof dataDir, env->GetStringUTFChars(str, NULL));
 }
 
 DLLEXPORT int Java_com_valvesoftware_ValveActivity2_setExtrasPackFilePath(JNIEnv *env, jclass *clazz, jstring str)
@@ -147,8 +147,8 @@ DLLEXPORT int Java_com_valvesoftware_ValveActivity2_setArgs(JNIEnv *env, jclass 
 
 void SetStartArgs()
 {
-	SetArg("/data/data/com.nvidia.valvesoftware.halflife2/hl2_linux "
-			"-game hl2 "
+	SetArg(dataDir);
+	SetArg("-game hl2 "
 			"-nosteam "
 			"+sv_unlockedchapters 99 "
 			"+mat_queue_mode 2 "
@@ -158,8 +158,7 @@ void SetStartArgs()
 			"+gl_rt_forcergba 1 "
 			"+mat_antialias 0 "
 			"-mat_antialias 0 "
-			"-gl_nodepthtexture 1 "
-			"+r_flashlightdepthtexture 1"
+			"+r_flashlightdepthtexture 1 "
 			"+gl_dropmips 0 "
 			"+cc_lang english "
 			"-insecure");
@@ -180,11 +179,13 @@ void SetStartArgs()
 				"+gl_blitmode 1 "
 				"+gl_supportMapBuffer 0 "
 				"-gl_separatedepthstencil 0 "
+				"-gl_nodepthtexture 0 "
 				"+r_flashlight_version2 0 "
 				"+gl_emurgba16 0 "
 				"+gl_emunooverwrite 0");
 	else
 		SetArg("-nouserclip "
+				"-gl_disablesamplerobjects "
 				"+gl_enabletexsubimage 0 "
 				"+mat_motion_blur_enabled 0 "
 				"+mat_disable_bloom 1 "
@@ -197,6 +198,7 @@ void SetStartArgs()
 				"+gl_blitmode 0 "
 				"+gl_supportMapBuffer 1 "
 				"-gl_separatedepthstencil 0 "// default is 1
+				"-gl_nodepthtexture 1 "
 				"+r_flashlight_version2 1 "
 				"+gl_emurgba16 1 "
 				"+gl_emunooverwrite 1");
@@ -231,7 +233,8 @@ public:
 class CGooglePlayGamesServices : public CBaseAppSystem<IAndroidServices>
 {
 	typedef CBaseAppSystem<IAndroidServices> BaseClass;
-public:
+
+	public:
 	virtual bool Connect( CreateInterfaceFn factory )
 	{
 		LogPrintf("CGooglePlayGamesServices::Connect");
@@ -340,9 +343,10 @@ DLLEXPORT int Java_org_libsdl_app_SDLActivity_nativeInit(JNIEnv *env, jclass cls
 	LogPrintf("SDL_Android_Init: 0x%X", SDL_Android_Init);
 	SDL_Android_Init(env, cls);
 
-	chdir(libraryPath);
-	getcwd(libraryPath, sizeof libraryPath);
-	setenv( "VALVE_GAME_PATH", libraryPath, 1 );
+	chdir(dataDir);
+	getcwd(dataDir, sizeof dataDir);
+	setenv( "VALVE_GAME_PATH", dataDir, 1 );
+	snprintf(dataDir, sizeof dataDir, "%s/hl2_linux", dataDir);
 
 	bUseGL = false;
 
