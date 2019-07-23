@@ -20,6 +20,9 @@ char javaArgv[2048];
 char startArgs[256][128];
 int iLastArgs = 0;
 
+bool bClient_loaded = false;
+void *libclient;
+
 DLLEXPORT int Java_com_valvesoftware_ValveActivity2_setMainPackFilePath(JNIEnv *env, jclass *clazz, jstring str)
 {
 	__android_log_print( ANDROID_LOG_DEBUG, "SourceSDK2013", "Java_com_valvesoftware_ValveActivity_setMainPackFilePath" );
@@ -79,14 +82,38 @@ DLLEXPORT int Java_com_valvesoftware_ValveActivity2_setExtrasPackFilePath(JNIEnv
 	return setenv( "VALVE_PAK2_PATH", env->GetStringUTFChars(str, NULL), 1 );
 }
 
+typedef void (*t_TouchEvent)(int finger, int x, int y, int act);
+t_TouchEvent TouchEvent;
+
+DLLEXPORT void clientLoaded( void )
+{
+	bClient_loaded = true;
+	libclient = dlopen("libclient.so",0);
+	TouchEvent = (t_TouchEvent)dlsym(libclient, "TouchEvent");
+	__android_log_print( ANDROID_LOG_INFO, "HL2TOUCH", "CLIENT LOADED!" );
+}
+
+DLLEXPORT void showKeyboard( int show )
+{
+
+}
+
+DLLEXPORT void JNICALL Java_com_valvesoftware_ValveActivity2_TouchEvent(JNIEnv *env, jobject obj, jint fingerid, jint x, jint y, jint action)
+{
+	if( !bClient_loaded )
+		return;
+
+	TouchEvent( fingerid, x, y, action );
+}
+
 typedef void (*t_SDL_Android_Init)(JNIEnv* env, jclass cls);
 t_SDL_Android_Init SDL_Android_Init;
 
 typedef void (*t_HookInit)();
 t_HookInit HookInit;
 
-typedef void *(*t_SDL_Main)(int a1, char *a2);
-t_SDL_Main SDL_Main;
+typedef void *(*t_SDL_StartTextInput)();
+t_SDL_StartTextInput SDL_StartTextInput;
 
 bool bUseGL;
 
@@ -342,6 +369,10 @@ DLLEXPORT int Java_org_libsdl_app_SDLActivity_nativeInit(JNIEnv *env, jclass cls
 	SDL_Android_Init = (t_SDL_Android_Init)dlsym(sdlHandle, "SDL_Android_Init");
 	LogPrintf("SDL_Android_Init: 0x%X", SDL_Android_Init);
 	SDL_Android_Init(env, cls);
+
+	SDL_StartTextInput = (t_SDL_StartTextInput)dlsym(sdlHandle, "SDL_StartTextInput");
+	LogPrintf("SDL_StartTextInput: 0x%X", SDL_StartTextInput);
+	SDL_StartTextInput();
 
 	chdir(dataDir);
 	getcwd(dataDir, sizeof dataDir);
