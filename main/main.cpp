@@ -23,6 +23,14 @@ int iLastArgs = 0;
 bool bClient_loaded = false;
 void *libclient;
 
+static struct jnimethods_s
+{
+        jclass actcls;
+        JavaVM *vm;
+        JNIEnv *env;
+        jmethodID enableTextInput;
+} jni;
+
 DLLEXPORT int Java_com_valvesoftware_ValveActivity2_setMainPackFilePath(JNIEnv *env, jclass *clazz, jstring str)
 {
 	__android_log_print( ANDROID_LOG_DEBUG, "SourceSDK2013", "Java_com_valvesoftware_ValveActivity_setMainPackFilePath" );
@@ -65,6 +73,7 @@ DLLEXPORT int Java_com_valvesoftware_ValveActivity2_setDropMip(int a1, int a2, s
 {
 	__android_log_print( ANDROID_LOG_DEBUG, "SourceSDK2013", "Java_com_valvesoftware_ValveActivity_setDropMip" );
 }
+
 DLLEXPORT int Java_com_valvesoftware_ValveActivity2_saveGame()
 {
 	__android_log_print( ANDROID_LOG_DEBUG, "SourceSDK2013", "Java_com_valvesoftware_ValveActivity_saveGame" );
@@ -95,7 +104,7 @@ DLLEXPORT void clientLoaded( void )
 
 DLLEXPORT void showKeyboard( int show )
 {
-
+	jni.env->CallStaticVoidMethod( jni.actcls, jni.enableTextInput, show );
 }
 
 DLLEXPORT void JNICALL Java_com_valvesoftware_ValveActivity2_TouchEvent(JNIEnv *env, jobject obj, jint fingerid, jint x, jint y, jint action)
@@ -392,6 +401,10 @@ DLLEXPORT int Java_org_libsdl_app_SDLActivity_nativeInit(JNIEnv *env, jclass cls
 	void *tierhook = dlopen("libtierhook.so", 0);
 	HookInit = (t_HookInit)dlsym(tierhook,"HookInit");
 	HookInit();
+
+	jni.env = env;
+	jni.actcls = env->FindClass("org/libsdl/app/SDLActivity");
+	jni.enableTextInput = env->GetStaticMethodID(jni.actcls, "showKeyboard", "(I)V");
 
 	LauncherMainAndroid = (t_LauncherMainAndroid)dlsym(launcherHandle, "LauncherMainAndroid");
 	LogPrintf("LauncherMainAndroid: 0x%X", LauncherMainAndroid);

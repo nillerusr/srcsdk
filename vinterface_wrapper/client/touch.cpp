@@ -31,6 +31,11 @@ int screen_h, screen_w;
 static CTouchButton g_Buttons[64];
 static int g_LastButton = 0;
 
+void *mainHandle;
+
+typedef void (*t_showKeyboard)(int show);
+t_showKeyboard showKeyboard;
+
 CTouchControls::CTouchControls()
 {
 	initialized = false;
@@ -46,10 +51,17 @@ void CTouchControls::Init( )
 		return;
 
 	engine->GetScreenSize( screen_w, screen_h );
-	void *touchlib = dlopen("libtouch.so",RTLD_LAZY);
-	void (*clientLoaded)(void) = (void (*)(void))dlsym( touchlib, "clientLoaded" );
+	void *mainHandle = dlopen("libmain.so",0);
+	void (*clientLoaded)(void) = (void (*)(void))dlsym( mainHandle, "clientLoaded" );
+	showKeyboard = (t_showKeyboard)dlsym( mainHandle, "showKeyboard" );
 	clientLoaded();
-	dlclose( touchlib );
+
+
+	void *sdl2 = dlopen("libSDL2.so",0);
+        void (*SDL_StartTextInput)(void) = (void (*)(void))dlsym(sdl2, "SDL_StartTextInput" );
+        SDL_StartTextInput();
+        dlclose( sdl2 );
+
 	w = a = s = d = false;
 	initialized = true;
 	btns.EnsureCapacity( 64 );
@@ -70,6 +82,8 @@ void CTouchControls::Init( )
 
 	move_start_x = move_start_y = 0.0f;
 
+	LogPrintf( "O4KO2, %d", KEY_BACKSPACE );
+
 	// textures
 	showtexture = hidetexture = resettexture = closetexture = joytexture = 0;
 	configchanged = false;
@@ -83,7 +97,7 @@ void CTouchControls::Init( )
 	IN_TouchAddDefaultButton( "right", "", "", KEY_XBUTTON_RIGHT, touch_key, 0.880000, 0.568889, 1.000000, 0.782222, color, 0, 0 );
 	IN_TouchAddDefaultButton( "A", "", "", KEY_XBUTTON_A, touch_key, 0.640000, 0.355556, 0.740000, 0.533333, color, 0, 0 );
 	IN_TouchAddDefaultButton( "B", "", "", KEY_XBUTTON_B, touch_key, 0.900000, 0.355556, 1.000000, 0.533333, color, 0, 0 );
-	IN_TouchAddDefaultButton( "console", "", "toggleconsole", KEY_NONE, touch_command, 0.920000, 0, 1.000000, 0.1422222, color, 0, 0 );
+	IN_TouchAddDefaultButton( "console", "", "showconsole", KEY_NONE, touch_command, 0.920000, 0, 1.000000, 0.1422222, color, 0, 0 );
 
 	IN_TouchAddButton( "invnext", "", "invnext", touch_command, 0.000000, 0.533333, 0.120000, 0.746667, -1, color );
 	IN_TouchAddButton( "invprev", "", "invprev", touch_command, 0.000000, 0.071111, 0.120000, 0.284444, -1, color );
@@ -307,7 +321,11 @@ void CTouchControls::ButtonPress( event_t *ev )
 					if( g_DefaultButtons[i].type == touch_key )
 						g_pInputInternal->InternalKeyCodePressed(g_DefaultButtons[i].key);
 					else if( g_DefaultButtons[i].type == touch_command )
+					{
 						engine->ClientCmd( g_DefaultButtons[i].command );
+						if( strcmp("showconsole", g_DefaultButtons[i].command) == 0 )
+							showKeyboard(1);
+					}
 				}
 			}
 		}
