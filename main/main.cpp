@@ -184,6 +184,7 @@ DLLEXPORT int Java_com_valvesoftware_ValveActivity2_setArgs(JNIEnv *env, jclass 
 void SetStartArgs()
 {
 	SetArg(dataDir);
+	SetArg(javaArgv);
 	SetArg("-game hl2 "
 			"-nosteam "
 			"+sv_unlockedchapters 99 "
@@ -392,7 +393,6 @@ DLLEXPORT int Java_org_libsdl_app_SDLActivity_nativeInit(JNIEnv *env, jclass cls
 
 	SetRenderer();
 	SetStartArgs();
-	SetArg(javaArgv);
 
 	void *engineHandle = dlopen("libengine.so", 0);
 	LogPrintf("engineHandle: 0x%X", engineHandle);
