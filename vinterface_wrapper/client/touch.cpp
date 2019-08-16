@@ -91,30 +91,44 @@ void CTouchControls::Init( )
 	rgba_t color(255, 255, 255, 255);
 
 	// buttons
-	IN_TouchAddDefaultButton( "down", "", "", KEY_XBUTTON_DOWN, touch_key, 0.760000, 0.782222, 0.880000, 0.995556, color, 0, 0 );
-	IN_TouchAddDefaultButton( "left", "", "", KEY_XBUTTON_LEFT, touch_key, 0.640000, 0.568889, 0.760000, 0.782222, color, 0, 0 );
-	IN_TouchAddDefaultButton( "up", "", "", KEY_XBUTTON_UP, touch_key, 0.760000, 0.355556, 0.880000, 0.568889, color, 0, 0 );
-	IN_TouchAddDefaultButton( "right", "", "", KEY_XBUTTON_RIGHT, touch_key, 0.880000, 0.568889, 1.000000, 0.782222, color, 0, 0 );
-	IN_TouchAddDefaultButton( "A", "", "", KEY_XBUTTON_A, touch_key, 0.640000, 0.355556, 0.740000, 0.533333, color, 0, 0 );
-	IN_TouchAddDefaultButton( "B", "", "", KEY_XBUTTON_B, touch_key, 0.900000, 0.355556, 1.000000, 0.533333, color, 0, 0 );
-	IN_TouchAddDefaultButton( "console", "", "showconsole", KEY_NONE, touch_command, 0.920000, 0, 1.000000, 0.1422222, color, 0, 0 );
 
-	IN_TouchAddButton( "invnext", "", "invnext", touch_command, 0.000000, 0.533333, 0.120000, 0.746667, -1, color );
-	IN_TouchAddButton( "invprev", "", "invprev", touch_command, 0.000000, 0.071111, 0.120000, 0.284444, -1, color );
-	IN_TouchAddButton( "use", "", "+use", touch_command, 0.880000, 0.462222, 1.000000, 0.675556, -1, color );
-	IN_TouchAddButton( "jump", "", "+jump", touch_command, 0.880000, 0.213333, 1.000000, 0.426667, -1, color );
-	IN_TouchAddButton( "attack", "", "+attack", touch_command, 0.760000, 0.533333, 0.880000, 0.746667, -1, color );
-	IN_TouchAddButton( "attack2", "", "+attack2", touch_command, 0.760000, 0.320000, 0.880000, 0.533333, -1, color );
-	IN_TouchAddButton( "loadquick", "", "load quick", touch_command, 0.760000, 0.000000, 0.840000, 0.142222, -1, color );
-	IN_TouchAddButton( "savequick", "", "save quick", touch_command, 0.840000, 0.000000, 0.920000, 0.142222, -1, color );
-	IN_TouchAddButton( "reload", "", "+reload", touch_command, 0.000000, 0.320000, 0.120000, 0.533333, -1, color );
-	IN_TouchAddButton( "flashlight", "", "impulse 100", touch_command, 0.920000, 0.000000, 1.000000, 0.142222, -1, color );
-	IN_TouchAddButton( "duck", "", "+duck", touch_command, 0.880000, 0.746667, 1.000000, 0.960000, -1, color );
-	IN_TouchAddButton( "tduck", "", ";+duck", touch_command, 0.560000, 0.817778, 0.620000, 0.924444, -1, color );
+	IN_TouchAddDefaultButton( "Y", "vgui/touch/menu_y", "", KEY_XBUTTON_Y, touch_key, 0.880000, 0.782222, 1.000000, 0.995556, color ,0 ,0);
+        IN_TouchAddDefaultButton( "up", "vgui/touch/prev_weap", "", KEY_XBUTTON_UP, touch_key, 0.760000, 0.355556, 0.880000, 0.568889, color ,0 ,0);
+        IN_TouchAddDefaultButton( "B", "vgui/touch/menu_b", "", KEY_XBUTTON_B, touch_key, 0.880000, 0.355556, 1.000000, 0.568889, color ,0 ,0);
+        IN_TouchAddDefaultButton( "A", "vgui/touch/menu_a", "", KEY_XBUTTON_A, touch_key, 0.640000, 0.355556, 0.760000, 0.568889, color ,0 ,0);
+        IN_TouchAddDefaultButton( "left", "vgui/touch/dpad_left", "", KEY_XBUTTON_LEFT, touch_key, 0.640000, 0.568889, 0.760000, 0.782222, color ,0 ,0);
+        IN_TouchAddDefaultButton( "X", "vgui/touch/menu_x", "", KEY_XBUTTON_X, touch_key, 0.640000, 0.782222, 0.760000, 0.995556, color ,0 ,0);
+        IN_TouchAddDefaultButton( "down", "vgui/touch/next_weap", "", KEY_XBUTTON_DOWN, touch_key, 0.760000, 0.782222, 0.880000, 0.995556, color ,0 ,0);
+        IN_TouchAddDefaultButton( "right", "vgui/touch/dpad_right", "", KEY_XBUTTON_RIGHT, touch_key, 0.880000, 0.568889, 1.000000, 0.782222, color ,0 ,0);
+/*
+	IN_TouchAddDefaultButton( "down", "vgui/touch/next_weap", "", KEY_XBUTTON_DOWN, touch_key, 0.760000, 0.782222, 0.880000, 0.995556, color, 0, 0 );
+	IN_TouchAddDefaultButton( "left", "vgui/touch/dpad_left", "", KEY_XBUTTON_LEFT, touch_key, 0.640000, 0.568889, 0.760000, 0.782222, color, 0, 0 );
+	IN_TouchAddDefaultButton( "up", "vgui/touch/prev_weap", "", KEY_XBUTTON_UP, touch_key, 0.760000, 0.355556, 0.880000, 0.568889, color, 0, 0 );
+	IN_TouchAddDefaultButton( "right", "vgui/touch/dpad_right", "", KEY_XBUTTON_RIGHT, touch_key, 0.880000, 0.568889, 1.000000, 0.782222, color, 0, 0 );
+	IN_TouchAddDefaultButton( "A", "vgui/touch/menu_a", "", KEY_XBUTTON_A, touch_key, 0.640000, 0.355556, 0.740000, 0.533333, color, 0, 0 );
+	IN_TouchAddDefaultButton( "B", "vgui/touch/menu_b", "", KEY_XBUTTON_B, touch_key, 0.900000, 0.355556, 1.000000, 0.533333, color, 0, 0 );
+*/
+	IN_TouchAddDefaultButton( "console", "vgui/touch/showconsole", "showconsole", KEY_NONE, touch_command, 0.920000, 0, 1.000000, 0.1422222, color, 0, 0 );
+
+	IN_TouchAddButton( "invnext", "vgui/touch/next_weap", "invnext", touch_command, 0.000000, 0.533333, 0.120000, 0.746667, -1, color );
+	IN_TouchAddButton( "invprev", "vgui/touch/prev_weap", "invprev", touch_command, 0.000000, 0.071111, 0.120000, 0.284444, -1, color );
+	IN_TouchAddButton( "use", "vgui/touch/use", "+use", touch_command, 0.880000, 0.462222, 1.000000, 0.675556, -1, color );
+	IN_TouchAddButton( "jump", "vgui/touch/jump", "+jump", touch_command, 0.880000, 0.213333, 1.000000, 0.426667, -1, color );
+	IN_TouchAddButton( "attack", "vgui/touch/shoot", "+attack", touch_command, 0.760000, 0.533333, 0.880000, 0.746667, -1, color );
+	IN_TouchAddButton( "attack2", "vgui/touch/shoot_alt", "+attack2", touch_command, 0.760000, 0.320000, 0.880000, 0.533333, -1, color );
+	IN_TouchAddButton( "loadquick", "vgui/touch/load", "load quick", touch_command, 0.760000, 0.000000, 0.840000, 0.142222, -1, color );
+	IN_TouchAddButton( "savequick", "vgui/touch/save", "save quick", touch_command, 0.840000, 0.000000, 0.920000, 0.142222, -1, color );
+	IN_TouchAddButton( "reload", "vgui/touch/reload", "+reload", touch_command, 0.000000, 0.320000, 0.120000, 0.533333, -1, color );
+	IN_TouchAddButton( "flashlight", "vgui/touch/flash_light_filled", "impulse 100", touch_command, 0.920000, 0.000000, 1.000000, 0.142222, -1, color );
+	IN_TouchAddButton( "duck", "vgui/touch/crouch", "+duck", touch_command, 0.880000, 0.746667, 1.000000, 0.960000, -1, color );
+	IN_TouchAddButton( "tduck", "vgui/touch/tduck", ";+duck", touch_command, 0.560000, 0.817778, 0.620000, 0.924444, -1, color );
 	IN_TouchAddButton( "look", "", "", touch_look, 0.5, 0, 1, 1, -1, color );
 	IN_TouchAddButton( "move", "", "", touch_move, 0, 0, 0.5, 1, -1, color );
 
-	IN_TouchAddButton( "menu", "", "gameui_activate", touch_command, 0.000000, 0.817778, 0.080000, 0.960000, -1, color );
+	IN_TouchAddButton( "zoom", "vgui/touch/zoom", "+zoom", touch_command, 0.760000, 0.142222, 0.840000, 0.284444, -1, color );
+	IN_TouchAddButton( "speed", "vgui/touch/speed", "+speed", touch_command, 0.180000, 0.568889, 0.280000, 0.746667, -1, color );
+
+	IN_TouchAddButton( "menu", "vgui/touch/menu", "gameui_activate", touch_command, 0.000000, 0.817778, 0.080000, 0.960000, -1, color );
 
 	Msg( "CTouchControls::Init()" );
 }
@@ -205,12 +219,9 @@ void CTouchControls::Paint( )
 	{
 		for (int i = 0; i < g_LastDefaultButton; i++)
 		{
-			g_pSurface->DrawSetColor(255, 0, 0, 155);
-			g_pSurface->DrawOutlinedRect(g_DefaultButtons[i].x1, g_DefaultButtons[i].y1, g_DefaultButtons[i].x2, g_DefaultButtons[i].y2);
-
-			//g_pSurface->DrawSetTexture( g_Buttons[i].textureID );
-			//g_pSurface->DrawSetColor(50,50,50,100);
-			//g_pSurface->DrawTexturedRect( g_Buttons[i].x1, g_Buttons[i].y1, g_Buttons[i].x2, g_Buttons[i].y2 );
+			g_pSurface->DrawSetColor(255, 255, 255, 155);
+			g_pSurface->DrawSetTexture( g_DefaultButtons[i].textureID );
+			g_pSurface->DrawTexturedRect( g_DefaultButtons[i].x1, g_DefaultButtons[i].y1, g_DefaultButtons[i].x2, g_DefaultButtons[i].y2 );
 		}
 	}
 	else
@@ -220,12 +231,9 @@ void CTouchControls::Paint( )
 			if( g_Buttons[i].type == touch_move || g_Buttons[i].type == touch_look )
 				continue;
 
-			g_pSurface->DrawSetColor(255, 0, 0, 155);
-			g_pSurface->DrawOutlinedRect(g_Buttons[i].x1, g_Buttons[i].y1, g_Buttons[i].x2, g_Buttons[i].y2);
-
-			//g_pSurface->DrawSetTexture( g_Buttons[i].textureID );
-		 	//g_pSurface->DrawSetColor(50,50,50,100);
-			//g_pSurface->DrawTexturedRect( g_Buttons[i].x1, g_Buttons[i].y1, g_Buttons[i].x2, g_Buttons[i].y2 );
+			g_pSurface->DrawSetColor(255, 255, 255, 155);
+			g_pSurface->DrawSetTexture( g_Buttons[i].textureID );
+			g_pSurface->DrawTexturedRect( g_Buttons[i].x1, g_Buttons[i].y1, g_Buttons[i].x2, g_Buttons[i].y2 );
 		}
 	}
 }
@@ -247,8 +255,9 @@ void CTouchControls::IN_TouchAddDefaultButton( const char *name, const char *tex
 	g_DefaultButtons[g_LastDefaultButton].type = type;
 	g_DefaultButtons[g_LastDefaultButton].aspect = aspect;
 	g_DefaultButtons[g_LastDefaultButton].flags = flags;
+	g_Buttons[g_LastButton].finger = -1;
 	g_DefaultButtons[g_LastDefaultButton].textureID = g_pSurface->CreateNewTextureID();
-	g_pSurface->DrawSetTextureFile( g_DefaultButtons[g_LastDefaultButton].textureID, "vgui/steam/games/icon_hl2", true, false);
+	g_pSurface->DrawSetTextureFile( g_DefaultButtons[g_LastDefaultButton].textureID, g_DefaultButtons[g_LastDefaultButton].texturefile, true, false);
 
 	g_LastDefaultButton++;
 }
@@ -267,8 +276,9 @@ void CTouchControls::IN_TouchAddButton( const char *name, const char *texturefil
 	g_Buttons[g_LastButton].y2 = (int)(y2*screen_h);
 	g_Buttons[g_LastButton].color = color;
 	g_Buttons[g_LastButton].type = type;
+	g_Buttons[g_LastButton].finger = -1;
 	g_Buttons[g_LastButton].textureID = g_pSurface->CreateNewTextureID();
-	g_pSurface->DrawSetTextureFile( g_Buttons[g_LastButton].textureID, "vgui/steam/games/icon_hl2", true, false);
+	g_pSurface->DrawSetTextureFile( g_Buttons[g_LastButton].textureID, g_Buttons[g_LastButton].texturefile, true, false);
 
 	g_LastButton++;
 }
