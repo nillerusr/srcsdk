@@ -157,7 +157,7 @@ void SetRenderer()
 		setenv("REGAL_SYS_EGL", "1", 1);
 		setenv("REGAL_SYS_GL", "0", 1);
 		setenv("REGAL_GL_VERSION", "2.1", 1);
-		setenv("REGAL_GL_EXTENSIONS", "GL_EXT_framebuffer_object GL_EXT_framebuffer_blit GL_NV_fence GL_ARB_vertex_buffer_object GL_EXT_texture_sRGB_decode GL_EXT_texture_compression_s3tc GL_EXT_texture_compression_dxt1", 1);
+		setenv("REGAL_GL_EXTENSIONS", "GL_EXT_framebuffer_object GL_EXT_framebuffer_blit GL_OES_mapbuffer GL_EXT_texture_sRGB_decode GL_EXT_texture_compression_s3tc GL_EXT_texture_compression_dxt1", 1);
 	}
 }
 
