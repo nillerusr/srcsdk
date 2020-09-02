@@ -91,6 +91,11 @@ DLLEXPORT int Java_com_valvesoftware_ValveActivity2_setExtrasPackFilePath(JNIEnv
 	return setenv( "VALVE_PAK2_PATH", env->GetStringUTFChars(str, NULL), 1 );
 }
 
+DLLEXPORT int Java_com_valvesoftware_ValveActivity2_setEnv(JNIEnv *jenv, jclass *jclass, jstring env, jstring value)
+{
+	return setenv( jenv->GetStringUTFChars(env, NULL), jenv->GetStringUTFChars(value, NULL), 1 );
+}
+
 typedef void (*t_TouchEvent)(int finger, int x, int y, int act);
 t_TouchEvent TouchEvent;
 
@@ -99,7 +104,6 @@ DLLEXPORT void clientLoaded( void )
 	bClient_loaded = true;
 	libclient = dlopen("libclient.so",0);
 	TouchEvent = (t_TouchEvent)dlsym(libclient, "TouchEvent");
-	__android_log_print( ANDROID_LOG_INFO, "HL2TOUCH", "CLIENT LOADED!" );
 }
 
 DLLEXPORT void showKeyboard( int show )
@@ -123,6 +127,9 @@ t_HookInit HookInit;
 
 typedef void *(*t_SDL_StartTextInput)();
 t_SDL_StartTextInput SDL_StartTextInput;
+
+typedef void (*t_egl_init)();
+t_egl_init egl_init;
 
 bool bUseGL;
 
@@ -384,6 +391,13 @@ DLLEXPORT int Java_org_libsdl_app_SDLActivity_nativeInit(JNIEnv *env, jclass cls
 	void *tierhook = dlopen("libtierhook.so", 0);
 	HookInit = (t_HookInit)dlsym(tierhook,"HookInit");
 	HookInit();
+
+#ifdef GL4ES
+	void *glHandle = dlopen("libRegal.so", 0);
+	egl_init = (t_egl_init)dlsym(glHandle, "egl_init");
+	if( egl_init )
+		egl_init();
+#endif
 
 	jni.env = env;
 	jni.actcls = env->FindClass("org/libsdl/app/SDLActivity");
