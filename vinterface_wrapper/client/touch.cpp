@@ -12,6 +12,7 @@ Please, don't punish, Mr. Newell. :)
 #include <string.h>
 #include "wrapper.h"
 #include "vgui/IInputInternal.h"
+#include <jni.h>
 
 #define boundmax( num, high ) ( (num) < (high) ? (num) : (high) )
 #define boundmin( num, low )  ( (num) >= (low) ? (num) : (low)  )
@@ -36,6 +37,9 @@ void *mainHandle;
 typedef void (*t_showKeyboard)(int show);
 t_showKeyboard showKeyboard;
 
+typedef signed int (*t_onNativeJoystickAxis)(JNIEnv *env, jclass *clazz, jint n, jfloat pitch);
+t_onNativeJoystickAxis onNativeJoystickAxis;
+
 CTouchControls::CTouchControls()
 {
 	initialized = false;
@@ -59,6 +63,7 @@ void CTouchControls::Init( )
 
 	void *sdl2 = dlopen("libSDL2.so",0);
         void (*SDL_StartTextInput)(void) = (void (*)(void))dlsym(sdl2, "SDL_StartTextInput" );
+	onNativeJoystickAxis = (t_onNativeJoystickAxis)dlsym(sdl2, "Java_org_libsdl_app_SDLActivity_onNativeJoystickAxis");
         SDL_StartTextInput();
         dlclose( sdl2 );
 
@@ -66,7 +71,7 @@ void CTouchControls::Init( )
 	initialized = true;
 	btns.EnsureCapacity( 64 );
 	look_finger = move_finger = resize_finger = -1;
-	forward = side = 0;
+	forward = side = movecount = 0;
 	scolor = rgba_t( -1, -1, -1, -1 );
 	state = state_none;
 	swidth = 1;
@@ -81,8 +86,6 @@ void CTouchControls::Init( )
 	overlayPanel->MoveToFront();
 
 	move_start_x = move_start_y = 0.0f;
-
-	LogPrintf( "O4KO2, %d", KEY_BACKSPACE );
 
 	// textures
 	showtexture = hidetexture = resettexture = closetexture = joytexture = 0;
@@ -144,6 +147,15 @@ void CTouchControls::Shutdown( )
 
 void CTouchControls::IN_Move()
 {
+        if( movecount )
+        {
+		onNativeJoystickAxis( NULL, NULL, 0, -(side / movecount) ); // x axis
+		onNativeJoystickAxis( NULL, NULL, 1, -(forward / movecount) ); // y axis
+
+		movecount = side = forward = 0;
+	}
+
+/*
 	if( side > 0.9 && !a ) 
 	{
 		a = true;
@@ -187,6 +199,7 @@ void CTouchControls::IN_Move()
 		w = false;
 		engine->ClientCmd("-forward");
 	}
+*/
 }
 
 void CTouchControls::IN_Look()
@@ -288,10 +301,9 @@ void CTouchControls::TouchMotion( event_t *ev )
 	if( enginevgui->IsGameUIVisible() )
 		return;
 
+	float f, s;
 	float x = (float)ev->x / screen_w;
 	float y = (float)ev->y / screen_h;
-
-	LogPrintf( "TouchMotion, %f, %f", x, y );
 
 	for (int i = 0; i < g_LastButton; i++)
 	{
@@ -300,11 +312,11 @@ void CTouchControls::TouchMotion( event_t *ev )
 			if( g_Buttons[i].type == touch_move )
 			{
 				//LogPrintf( "TouchMotion, touch_move x:%f, y:%f, startx:%f, starty:%f", x, y, move_start_x, move_start_y );
-
-				forward = ( move_start_y - y ) / TOUCH_SIDEZONE;
-				side = ( move_start_x - x ) / TOUCH_SIDEZONE;
-				forward = bound( -1, forward, 1 );
-				side = bound( -1, side, 1 );
+				f = ( move_start_y - y ) / TOUCH_SIDEZONE;
+				s = ( move_start_x - x ) / TOUCH_SIDEZONE;
+				forward += bound( -1, f, 1 );
+				side += bound( -1, s, 1 );
+				movecount++;
 			}
 			else if( g_Buttons[i].type == touch_look )
 			{
@@ -400,11 +412,10 @@ void CTouchControls::ButtonPress( event_t *ev )
 
 					if( g_Buttons[i].type == touch_move )
 					{
-						forward = side = 0;
-						if( w ) { engine->ClientCmd("-forward"); }
-						if( a ) { engine->ClientCmd("-moveleft"); }
-						if( s ) { engine->ClientCmd("-back"); }
-						if( d ) { engine->ClientCmd("-moveright"); }
+						forward = side = movecount = 0;
+						onNativeJoystickAxis( NULL, NULL, 0, 0 ); // x axis
+						onNativeJoystickAxis( NULL, NULL, 1, 0 ); // y axis
+
 						move_finger = -1;
 					}
 					else if( g_Buttons[i].type == touch_look )

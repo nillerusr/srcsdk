@@ -164,7 +164,7 @@ private:
 	
 	int look_finger;
 	int move_finger;
-	float forward, side;
+	float forward, side, movecount;
 	float yaw, pitch;
 	CTouchButton *move;
 	
