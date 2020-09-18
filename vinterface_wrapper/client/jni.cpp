@@ -96,7 +96,6 @@ DLLEXPORT int TouchEvent( int fingerid, int x, int y, int action )
 	ev->x = x;
 	ev-> y = y;
 	ev->fingerid = fingerid;
-	LogPrintf( "TouchEvent, %d, %d", x, y );
 
 	Android_PushEvent();
 }

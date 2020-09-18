@@ -13,10 +13,17 @@ Please, don't punish, Mr. Newell. :)
 #include "wrapper.h"
 #include "vgui/IInputInternal.h"
 #include <jni.h>
+#include <vgui_controls/Panel.h>
+#include <vgui_controls/Button.h>
+#include <gameui/BasePanel.h>
+#include <gameui/NewGameDialog.h>
+#include <gameui/MouseMessageForwardingPanel.h>
+
 
 #define boundmax( num, high ) ( (num) < (high) ? (num) : (high) )
 #define boundmin( num, low )  ( (num) >= (low) ? (num) : (low)  )
 #define bound( low, num, high ) ( boundmin( boundmax(num, high), low ))
+#define S
 
 #define TOUCH_YAW 120
 #define TOUCH_PITCH 90
@@ -49,6 +56,20 @@ CTouchControls::~CTouchControls()
 {
 }
 
+bool IsButton(const char *classname)
+{
+    if( strcmp(classname, "PageTab") == 0 ||
+            strcmp(classname, "CGameMenuItem") == 0 ||
+            strcmp(classname, "CCvarToggleCheckButton") == 0 ||
+            strcmp(classname, "RadioButton") == 0 ||
+            strcmp(classname, "Button") == 0 ||
+            strcmp(classname, "CNewGamePlayButton") == 0 ||
+            strcmp(classname, "CheckButton") == 0 ||
+            strcmp(classname, "MenuItem") == 0 )
+        return true;
+    return false;
+}
+
 void CTouchControls::Init( )
 {
 	if( initialized )
@@ -70,6 +91,7 @@ void CTouchControls::Init( )
 	w = a = s = d = false;
 	initialized = true;
 	btns.EnsureCapacity( 64 );
+    vhandle = 0;
 	look_finger = move_finger = resize_finger = -1;
 	forward = side = movecount = 0;
 	scolor = rgba_t( -1, -1, -1, -1 );
@@ -79,6 +101,7 @@ void CTouchControls::Init( )
 	showbuttons = true;
 	clientonly = false;
 	precision = false;
+    mouse_events = 0;
 
 	overlayPanel = new COverlayPanel(NULL, "OverlayPanel");
 	overlayPanel->SetParent(enginevgui->GetPanel(PANEL_GAMEUIDLL));
@@ -94,25 +117,7 @@ void CTouchControls::Init( )
 	rgba_t color(255, 255, 255, 255);
 
 	// buttons
-
-	IN_TouchAddDefaultButton( "Y", "vgui/touch/menu_y", "", KEY_XBUTTON_Y, touch_key, 0.880000, 0.782222, 1.000000, 0.995556, color ,0 ,0);
-        IN_TouchAddDefaultButton( "up", "vgui/touch/prev_weap", "", KEY_XBUTTON_UP, touch_key, 0.760000, 0.355556, 0.880000, 0.568889, color ,0 ,0);
-        IN_TouchAddDefaultButton( "B", "vgui/touch/menu_b", "", KEY_XBUTTON_B, touch_key, 0.880000, 0.355556, 1.000000, 0.568889, color ,0 ,0);
-        IN_TouchAddDefaultButton( "A", "vgui/touch/menu_a", "", KEY_XBUTTON_A, touch_key, 0.640000, 0.355556, 0.760000, 0.568889, color ,0 ,0);
-        IN_TouchAddDefaultButton( "left", "vgui/touch/dpad_left", "", KEY_XBUTTON_LEFT, touch_key, 0.640000, 0.568889, 0.760000, 0.782222, color ,0 ,0);
-        IN_TouchAddDefaultButton( "X", "vgui/touch/menu_x", "", KEY_XBUTTON_X, touch_key, 0.640000, 0.782222, 0.760000, 0.995556, color ,0 ,0);
-        IN_TouchAddDefaultButton( "down", "vgui/touch/next_weap", "", KEY_XBUTTON_DOWN, touch_key, 0.760000, 0.782222, 0.880000, 0.995556, color ,0 ,0);
-        IN_TouchAddDefaultButton( "right", "vgui/touch/dpad_right", "", KEY_XBUTTON_RIGHT, touch_key, 0.880000, 0.568889, 1.000000, 0.782222, color ,0 ,0);
-/*
-	IN_TouchAddDefaultButton( "down", "vgui/touch/next_weap", "", KEY_XBUTTON_DOWN, touch_key, 0.760000, 0.782222, 0.880000, 0.995556, color, 0, 0 );
-	IN_TouchAddDefaultButton( "left", "vgui/touch/dpad_left", "", KEY_XBUTTON_LEFT, touch_key, 0.640000, 0.568889, 0.760000, 0.782222, color, 0, 0 );
-	IN_TouchAddDefaultButton( "up", "vgui/touch/prev_weap", "", KEY_XBUTTON_UP, touch_key, 0.760000, 0.355556, 0.880000, 0.568889, color, 0, 0 );
-	IN_TouchAddDefaultButton( "right", "vgui/touch/dpad_right", "", KEY_XBUTTON_RIGHT, touch_key, 0.880000, 0.568889, 1.000000, 0.782222, color, 0, 0 );
-	IN_TouchAddDefaultButton( "A", "vgui/touch/menu_a", "", KEY_XBUTTON_A, touch_key, 0.640000, 0.355556, 0.740000, 0.533333, color, 0, 0 );
-	IN_TouchAddDefaultButton( "B", "vgui/touch/menu_b", "", KEY_XBUTTON_B, touch_key, 0.900000, 0.355556, 1.000000, 0.533333, color, 0, 0 );
-*/
 	IN_TouchAddDefaultButton( "console", "vgui/touch/showconsole", "showconsole", KEY_NONE, touch_command, 0.920000, 0, 1.000000, 0.1422222, color, 0, 0 );
-
 	IN_TouchAddButton( "invnext", "vgui/touch/next_weap", "invnext", touch_command, 0.000000, 0.533333, 0.120000, 0.746667, -1, color );
 	IN_TouchAddButton( "invprev", "vgui/touch/prev_weap", "invprev", touch_command, 0.000000, 0.071111, 0.120000, 0.284444, -1, color );
 	IN_TouchAddButton( "use", "vgui/touch/use", "+use", touch_command, 0.880000, 0.462222, 1.000000, 0.675556, -1, color );
@@ -147,13 +152,13 @@ void CTouchControls::Shutdown( )
 
 void CTouchControls::IN_Move()
 {
-        if( movecount )
-        {
-		onNativeJoystickAxis( NULL, NULL, 0, -(side / movecount) ); // x axis
+    if( movecount )
+    {
+        onNativeJoystickAxis( NULL, NULL, 0, -(side / movecount) ); // x axis
 		onNativeJoystickAxis( NULL, NULL, 1, -(forward / movecount) ); // y axis
 
-		movecount = side = forward = 0;
-	}
+        movecount = side = forward = 0;
+    }
 
 /*
 	if( side > 0.9 && !a ) 
@@ -225,30 +230,30 @@ void CTouchControls::Frame()
 
 void CTouchControls::Paint( )
 {
-	if (!initialized)
+    if (!initialized)
 		return;
 
-	if ( enginevgui->IsGameUIVisible() )
-	{
-		for (int i = 0; i < g_LastDefaultButton; i++)
-		{
-			g_pSurface->DrawSetColor(255, 255, 255, 155);
-			g_pSurface->DrawSetTexture( g_DefaultButtons[i].textureID );
-			g_pSurface->DrawTexturedRect( g_DefaultButtons[i].x1, g_DefaultButtons[i].y1, g_DefaultButtons[i].x2, g_DefaultButtons[i].y2 );
-		}
-	}
-	else
-	{
-		for (int i = 0; i < g_LastButton; i++)
-		{
-			if( g_Buttons[i].type == touch_move || g_Buttons[i].type == touch_look )
-				continue;
+    if ( enginevgui->IsGameUIVisible() )
+    {
+        for (int i = 0; i < g_LastDefaultButton; i++)
+        {
+            g_pSurface->DrawSetColor(255, 255, 255, 155);
+            g_pSurface->DrawSetTexture( g_DefaultButtons[i].textureID );
+            g_pSurface->DrawTexturedRect( g_DefaultButtons[i].x1, g_DefaultButtons[i].y1, g_DefaultButtons[i].x2, g_DefaultButtons[i].y2 );
+        }
+    }
+    else
+    {
+        for (int i = 0; i < g_LastButton; i++)
+        {
+            if( g_Buttons[i].type == touch_move || g_Buttons[i].type == touch_look )
+                continue;
 
-			g_pSurface->DrawSetColor(255, 255, 255, 155);
-			g_pSurface->DrawSetTexture( g_Buttons[i].textureID );
-			g_pSurface->DrawTexturedRect( g_Buttons[i].x1, g_Buttons[i].y1, g_Buttons[i].x2, g_Buttons[i].y2 );
-		}
-	}
+            g_pSurface->DrawSetColor(255, 255, 255, 155);
+            g_pSurface->DrawSetTexture( g_Buttons[i].textureID );
+            g_pSurface->DrawTexturedRect( g_Buttons[i].x1, g_Buttons[i].y1, g_Buttons[i].x2, g_Buttons[i].y2 );
+        }
+    }
 }
 
 void CTouchControls::IN_TouchAddDefaultButton( const char *name, const char *texturefile, const char *command, vgui::KeyCode key, ETouchButtonType type, float x1, float y1, float x2, float y2, rgba_t color, float aspect, int flags )
@@ -298,7 +303,7 @@ void CTouchControls::IN_TouchAddButton( const char *name, const char *texturefil
 
 void CTouchControls::TouchMotion( event_t *ev )
 {
-	if( enginevgui->IsGameUIVisible() )
+    if( enginevgui->IsGameUIVisible() )
 		return;
 
 	float f, s;
@@ -337,7 +342,7 @@ void CTouchControls::ButtonPress( event_t *ev )
 		{ //buttons in menu
 			for (int i = 0; i < g_LastDefaultButton; i++)
 			{
-				if(  ev->x > g_DefaultButtons[i].x1 && ev->x < g_DefaultButtons[i].x2 && ev->y > g_DefaultButtons[i].y1 && ev->y < g_DefaultButtons[i].y2 )
+                if(  ev->x > g_DefaultButtons[i].x1 && ev->x < g_DefaultButtons[i].x2 && ev->y > g_DefaultButtons[i].y1 && ev->y < g_DefaultButtons[i].y2 )
 				{
 					g_DefaultButtons[i].finger = ev->fingerid;
 					if( g_DefaultButtons[i].type == touch_key )
@@ -348,8 +353,27 @@ void CTouchControls::ButtonPress( event_t *ev )
 						if( strcmp("showconsole", g_DefaultButtons[i].command) == 0 )
 							showKeyboard(1);
 					}
-				}
+                }
 			}
+
+            g_pInputInternal->SetCursorPos(ev->x, ev->y);
+            g_pInputInternal->UpdateCursorPosInternal(ev->x, ev->y);
+
+            vgui::Panel *panel = vgui::ipanel()->GetPanel(g_pInputInternal->GetMouseOver(), "GameUI");
+            if( panel )
+            {
+                if( strcmp(panel->GetClassName(), "CSelectionOverlayPanel") == 0 )
+                {
+                    CSelectionOverlayPanel *SelectionPanel = (CSelectionOverlayPanel*)panel;
+                    SelectionPanel->OnMousePressed(MOUSE_LEFT);
+                }
+                else if( strcmp(panel->GetClassName(), "CMouseMessageForwardingPanel") == 0 )
+                {
+                    CMouseMessageForwardingPanel *SelectionPanel = (CMouseMessageForwardingPanel*)panel;
+                    SelectionPanel->OnMousePressed(MOUSE_LEFT);
+                }
+                LogPrintf("press panel: %s\n", panel->GetClassName());
+            }
 		}
 		else
 		{
@@ -392,7 +416,7 @@ void CTouchControls::ButtonPress( event_t *ev )
 	{
 		if( enginevgui->IsGameUIVisible() )
 		{ //buttons in menu
-			for (int i = 0; i < g_LastDefaultButton; i++)
+            for (int i = 0; i < g_LastDefaultButton; i++)
 			{
 				if( g_DefaultButtons[i].finger == ev->fingerid )
 				{
@@ -400,7 +424,18 @@ void CTouchControls::ButtonPress( event_t *ev )
 					if( g_DefaultButtons[i].type == touch_key )
 						g_pInputInternal->InternalKeyCodeReleased(g_DefaultButtons[i].key);
 				}
-			}
+            }
+            g_pInputInternal->SetCursorPos(ev->x,ev->y);
+            g_pInputInternal->UpdateCursorPosInternal(ev->x, ev->y);
+            vgui::Panel *panel = vgui::ipanel()->GetPanel(g_pInputInternal->GetMouseOver(), "GameUI");
+            if( panel )
+            {
+                if( IsButton(panel->GetClassName() ) )
+                {
+                    vgui::Button *button = (vgui::Button*)panel;
+                    button->DoClick();
+                }
+            }
 		}
 		else
 		{

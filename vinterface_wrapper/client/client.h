@@ -23,6 +23,11 @@ Please, don't punish, Mr. Newell. :)
 #include "vgui/KeyCode.h"
 #include "OverlayPanel.h"
 
+#define STEAMCONTROLLER_A -3
+
+#define MOUSE_EVENT_PRESS 0x02
+#define MOUSE_EVENT_RELEASE 0x04
+
 extern IBaseClientDLL *realClientDLL; // real client implementation
 extern IBaseClientDLL *wrapClientDLL; // wrapper class
 #define CMD_SIZE 64
@@ -189,6 +194,8 @@ private:
 	int joytexture; // touch indicator
 	bool configchanged;
 	vgui::HFont textfont;
+    vgui::VPANEL vhandle;
+    int mouse_events;
 };
 
 extern CTouchControls g_Touch;
