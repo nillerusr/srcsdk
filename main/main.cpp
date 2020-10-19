@@ -1,6 +1,6 @@
 // ======================================
 // Reverse-engineerined libmain.so
-// So ,nvidia, fuck you
+// So ,nvidia, fuck you (c) Linus Torvalds
 // ======================================
 
 #include <stdio.h>
@@ -17,6 +17,7 @@ char dataDir[512];
 
 const char *LauncherArgv[512];
 char javaArgv[2048];
+char gameName[512];
 char startArgs[256][128];
 int iLastArgs = 0;
 
@@ -67,6 +68,7 @@ DLLEXPORT void Java_com_valvesoftware_ValveActivity2_setLanguage()
 DLLEXPORT int Java_com_valvesoftware_ValveActivity2_setDocumentDirectoryPath(JNIEnv *env, jclass *clazz, jstring str)
 {
 	__android_log_print( ANDROID_LOG_DEBUG, "SourceSDK2013", "Java_com_valvesoftware_ValveActivity_setDocumentDirectoryPath" );
+	setenv( "HOME", env->GetStringUTFChars(str, NULL), 1);
 	return setenv( "VALVE_CACHE_PATH", env->GetStringUTFChars(str, NULL), 1 );
 }
 DLLEXPORT int Java_com_valvesoftware_ValveActivity2_setDropMip(int a1, int a2, signed int a3)
@@ -91,9 +93,15 @@ DLLEXPORT int Java_com_valvesoftware_ValveActivity2_setExtrasPackFilePath(JNIEnv
 	return setenv( "VALVE_PAK2_PATH", env->GetStringUTFChars(str, NULL), 1 );
 }
 
-DLLEXPORT int Java_com_valvesoftware_ValveActivity2_setEnv(JNIEnv *jenv, jclass *jclass, jstring env, jstring value)
+DLLEXPORT int Java_com_valvesoftware_ValveActivity2_setenv(JNIEnv *jenv, jclass *jclass, jstring env, jstring value, jint over)
 {
-	return setenv( jenv->GetStringUTFChars(env, NULL), jenv->GetStringUTFChars(value, NULL), 1 );
+	__android_log_print( ANDROID_LOG_DEBUG, "SourceSDK2013", "Java_com_valvesoftware_ValveActivity2_setenv %s=%s", jenv->GetStringUTFChars(env, NULL),jenv->GetStringUTFChars(value, NULL) );
+	return setenv( jenv->GetStringUTFChars(env, NULL), jenv->GetStringUTFChars(value, NULL), over );
+}
+
+DLLEXPORT int Java_com_valvesoftware_ValveActivity2_setGame(JNIEnv *jenv, jclass *jclass, jstring game)
+{
+	snprintf(gameName, sizeof dataDir, "-game %s", jenv->GetStringUTFChars(game, NULL));
 }
 
 typedef void (*t_TouchEvent)(int finger, int x, int y, int act);
@@ -137,7 +145,7 @@ void SetRenderer()
 {
 	if ( bUseGL )
 	{
-		setenv("USE_BIG_GL", "1", 1);
+		//setenv("USE_BIG_GL", "1", 1);
 	}
 	else
 	{
@@ -192,23 +200,24 @@ void SetStartArgs()
 {
 	SetArg(dataDir);
 	SetArg(javaArgv);
-	SetArg("-game hl2 "
-			"-nosteam "
+	SetArg(gameName);
+	SetArg("-nosteam "
+			"-nouserclip "
 			"+sv_unlockedchapters 99 "
 			"+mat_queue_mode 2 "
 			"-ignoredxsupportcfg "
 			"-regal "
 			"+gl_rt_forcergba 1 "
-			"+mat_antialias 0 "
-			"-mat_antialias 0 "
+			"+mat_antialias 1 "
+			"-mat_antialias 1 "
 			"+r_flashlightdepthtexture 1 "
 			"+gl_dropmips 1 "
 			"-insecure");
 
 	if( bUseGL )
 		SetArg("-userclip "
-				"-gl_enablesamplerobjects "
-				"-egl "
+				"-gl_disablesamplerobjects "
+//				"-egl "
 				"+gl_enabletexsubimage 1 "
 				"+gl_blitmode 1 "
 				"+gl_supportMapBuffer 0 "
@@ -222,7 +231,7 @@ void SetStartArgs()
 				"-gl_disablesamplerobjects "
 				"+gl_enabletexsubimage 0 "
 				"+mat_reducefillrate 1 "
-				"+gl_blitmode 0 "
+				"+gl_blitmode 1 "
 				"+gl_supportMapBuffer 1 "
 				"-gl_separatedepthstencil 0 "// default is 1
 				"-gl_nodepthtexture 1 "
@@ -393,6 +402,7 @@ DLLEXPORT int Java_org_libsdl_app_SDLActivity_nativeInit(JNIEnv *env, jclass cls
 	HookInit();
 
 #ifdef GL4ES
+
 	void *glHandle = dlopen("libRegal.so", 0);
 	egl_init = (t_egl_init)dlsym(glHandle, "egl_init");
 	if( egl_init )
