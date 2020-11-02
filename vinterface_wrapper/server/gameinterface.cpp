@@ -18,7 +18,7 @@ IServerGameDLL *realServerDLL;
 IVEngineServer	*engine = NULL;
 IFileSystem *filesystem = NULL; // Looks like this is useless. Can be removed?
 
-GET_INTERFACE_PTR( Server, "libserver_original.so", INTERFACEVERSION_SERVERGAMEDLL, &realServerDLL );
+GET_INTERFACE_PTR( Server, getenv("LIBRARY_SERVER"), INTERFACEVERSION_SERVERGAMEDLL, &realServerDLL );
 
 class CWrapServer : public IServerGameDLL
 {

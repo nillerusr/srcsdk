@@ -1,6 +1,3 @@
-# Was taken from libclient wrapper and poorly rewritten.
-# Maybe that one wont compile, please do PR.
-
 DLLNAME=libserver
 
 ifeq ($(NDK),1)
@@ -26,13 +23,14 @@ OBJS = $(patsubst %.cpp,%.o,$(SRCS))
 OBJS += $(patsubst %.c,%.o,$(SRCS_C))
 
 LIBS = \
-	../../lib/public/armeabi-v7a/tier1.a \ // Is this required now? Should i remove it? I think so.
-	../../lib/public/armeabi-v7a/tier2.a \ // Is this required now? Should i remove it? I think so.
-	../../lib/public/armeabi-v7a/tier3.a \ // Is this required now? Should i remove it? I think so.
+	../../lib/public/armeabi-v7a/vgui_controls.a \
+	../../lib/public/armeabi-v7a/tier1.a \
+	../../lib/public/armeabi-v7a/tier2.a \
+	../../lib/public/armeabi-v7a/tier3.a \
 	../../lib/public/armeabi-v7a/libandroid_support.a
 
 
-OPTFLAGS=-march=armv7-a -mtune=cortex-a15 -mthumb -mfloat-abi=softfp -mfpu=neon -mcpu=cortex-a9 -pipe -mvectorize-with-neon-quad -g -fno-exceptions -fPIC -fvisibility=hidden
+OPTFLAGS=-march=armv7-a -mtune=cortex-a15 -mthumb -mfloat-abi=softfp -mfpu=neon -mcpu=cortex-a9 -pipe -mvectorize-with-neon-quad -fno-exceptions -fPIC -fvisibility=hidden
 CXXFLAGS=$(OPTFLAGS) -fpermissive -std=gnu++0x -Wno-narrowing
 CFLAGS=$(OPTFLAGS)
 
