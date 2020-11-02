@@ -27,7 +27,7 @@ vgui::IInputInternal *g_pInputInternal = NULL;
 
 // we don't provide own full implementation of VClient017, so we need wrap it
 // we also provide ourselves as "libclient.so", so real library was moved to "libclient_original.so"
-GET_INTERFACE_PTR( Client, "libclient_original.so", CLIENT_DLL_INTERFACE_VERSION, &realClientDLL );
+GET_INTERFACE_PTR( Client, getenv("LIBRARY_CLIENT"), CLIENT_DLL_INTERFACE_VERSION, &realClientDLL );
 GET_INTERFACE_PTR( VGUI2, "libvgui2.so", VGUI_PANEL_INTERFACE_VERSION, &g_pPanel );
 GET_INTERFACE_PTR( VGUI_Matsurface, "libvguimatsurface.so", VGUI_SURFACE_INTERFACE_VERSION, &g_pSurface );
 GET_INTERFACE_PTR( VGUI_Scheme, "libvgui2.so", VGUI_SCHEME_INTERFACE_VERSION, &g_pScheme );

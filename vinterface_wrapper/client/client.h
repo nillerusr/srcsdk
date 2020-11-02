@@ -28,6 +28,13 @@ Please, don't punish, Mr. Newell. :)
 #define MOUSE_EVENT_PRESS 0x02
 #define MOUSE_EVENT_RELEASE 0x04
 
+enum ActivationType_t
+{
+    ACTIVATE_ONPRESSEDANDRELEASED, // normal button behaviour
+    ACTIVATE_ONPRESSED, // menu buttons, toggle buttons
+    ACTIVATE_ONRELEASED, // menu items
+};
+
 extern IBaseClientDLL *realClientDLL; // real client implementation
 extern IBaseClientDLL *wrapClientDLL; // wrapper class
 #define CMD_SIZE 64
@@ -94,8 +101,8 @@ typedef struct event_s
 {
 	eventtype_t type;
 	event_clientcmd_t clientCmd;
-	int x;
-	int y;
+	float x;
+	float y;
 	int fingerid;
 } event_t;
 
@@ -199,6 +206,9 @@ private:
 };
 
 extern CTouchControls g_Touch;
+
+typedef void (*t_showKeyboard)(int show);
+extern t_showKeyboard showKeyboard;
 
 void Android_RunEvents();
 
