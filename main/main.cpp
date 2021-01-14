@@ -19,9 +19,11 @@ const char *LauncherArgv[512];
 char javaArgv[2048];
 char gameName[512];
 char startArgs[256][128];
+char language[1024] = "english";
 int iLastArgs = 0;
 
 bool bClient_loaded = false;
+bool bShowTouch = true;
 void *libclient;
 
 static struct jnimethods_s
@@ -31,6 +33,7 @@ static struct jnimethods_s
         JNIEnv *env;
         jmethodID enableTextInput;
 } jni;
+
 
 DLLEXPORT int Java_com_valvesoftware_ValveActivity2_setMainPackFilePath(JNIEnv *env, jclass *clazz, jstring str)
 {
@@ -61,8 +64,9 @@ DLLEXPORT void Java_com_valvesoftware_ValveActivity2_setNativeLibPath(JNIEnv *en
 	__android_log_print( ANDROID_LOG_DEBUG, "SourceSDK2013", "Java_com_valvesoftware_ValveActivity_setNativeLibPath" );
 //	snprintf(dataDir, sizeof dataDir, env->GetStringUTFChars(str, NULL));
 }
-DLLEXPORT void Java_com_valvesoftware_ValveActivity2_setLanguage()
+DLLEXPORT void Java_com_valvesoftware_ValveActivity2_setLanguage(JNIEnv *env, jclass *clazz, jstring str)
 {
+	snprintf(language, sizeof language, "%s", env->GetStringUTFChars(str, NULL));
 	__android_log_print( ANDROID_LOG_DEBUG, "SourceSDK2013", "Java_com_valvesoftware_ValveActivity_setLanguage" );
 }
 DLLEXPORT int Java_com_valvesoftware_ValveActivity2_setDocumentDirectoryPath(JNIEnv *env, jclass *clazz, jstring str)
@@ -102,8 +106,10 @@ DLLEXPORT int Java_com_valvesoftware_ValveActivity2_setenv(JNIEnv *jenv, jclass 
 DLLEXPORT int Java_com_valvesoftware_ValveActivity2_setGame(JNIEnv *jenv, jclass *jclass, jstring game)
 {
 	snprintf(gameName, sizeof dataDir, "-game %s", jenv->GetStringUTFChars(game, NULL));
+	return setenv( "VALVE_MOD",  jenv->GetStringUTFChars(game, NULL), 1);
 }
 
+DLLEXPORT 
 typedef void (*t_TouchEvent)(int finger, int x, int y, int act);
 t_TouchEvent TouchEvent;
 
@@ -112,11 +118,17 @@ DLLEXPORT void clientLoaded( void )
 	bClient_loaded = true;
 	libclient = dlopen("libclient.so",0);
 	TouchEvent = (t_TouchEvent)dlsym(libclient, "TouchEvent");
+	((void (*)(bool))dlsym(libclient, "showTouch"))(bShowTouch);
 }
 
 DLLEXPORT void showKeyboard( int show )
 {
 	jni.env->CallStaticVoidMethod( jni.actcls, jni.enableTextInput, show );
+}
+
+DLLEXPORT void JNICALL Java_com_valvesoftware_ValveActivity2_showTouch(JNIEnv *env, jobject obj, jboolean show_touch)
+{
+	bShowTouch = show_touch;
 }
 
 DLLEXPORT void JNICALL Java_com_valvesoftware_ValveActivity2_TouchEvent(JNIEnv *env, jobject obj, jint fingerid, jint x, jint y, jint action)
@@ -125,6 +137,11 @@ DLLEXPORT void JNICALL Java_com_valvesoftware_ValveActivity2_TouchEvent(JNIEnv *
 		return;
 
 	TouchEvent( fingerid, x, y, action );
+}
+
+DLLEXPORT const char* getSystemLanguage()
+{
+	return language;
 }
 
 typedef void (*t_SDL_Android_Init)(JNIEnv* env, jclass cls);
@@ -198,7 +215,11 @@ DLLEXPORT int Java_com_valvesoftware_ValveActivity2_setArgs(JNIEnv *env, jclass 
 
 void SetStartArgs()
 {
+	char lang[2048];
+	snprintf(lang, sizeof lang, "-language %s +cc_lang %s", language, language);
+
 	SetArg(dataDir);
+	SetArg(lang);
 	SetArg(javaArgv);
 	SetArg(gameName);
 	SetArg("-nosteam "
