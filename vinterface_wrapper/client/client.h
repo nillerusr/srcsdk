@@ -147,6 +147,15 @@ public:
 	int textureID;
 };
 
+struct touch_settings_s
+{
+	float pitch = 90;
+	float yaw = 120;
+	float sensitivity = 2;
+	float forwardzone = 0.8;
+	float sidezone = 0.12;
+};
+
 class CTouchControls
 {
 public:
@@ -162,9 +171,10 @@ public:
 	void Frame( );
 
 	void IN_TouchAddDefaultButton( const char *name, const char *texturefile, const char *command, vgui::KeyCode key, ETouchButtonType type, float x1, float y1, float x2, float y2, rgba_t color, float aspect, int flags );
-	void IN_TouchAddButton( const char *name, const char *texturefile, const char *command, ETouchButtonType type, float x1, float y1, float x2, float y2, int fingerid, rgba_t color );
+	void IN_TouchAddButton( const char *name, const char *texturefile, const char *command, ETouchButtonType type, float x1, float y1, float x2, float y2, rgba_t color );
 	void IN_Move( );
 	void IN_Look( );
+	void ParseConfig(FILE *cfg);
 	void ButtonPress( event_t *ev );
 	void TouchMotion( event_t *ev );
 
@@ -203,6 +213,9 @@ private:
 	vgui::HFont textfont;
     vgui::VPANEL vhandle;
     int mouse_events;
+	char gamedir[2048];
+	char modname[512];
+	struct touch_settings_s touch_settings;
 };
 
 extern CTouchControls g_Touch;

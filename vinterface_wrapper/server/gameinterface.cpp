@@ -13,6 +13,13 @@ Please, don't punish, Mr. Newell. :)
 #include "eiface.h"
 #include "filesystem.h"
 
+extern "C"
+{
+	// WTF?!!
+	class __class_type_info;
+	void *__dynamic_cast(const void* __src_ptr, const __class_type_info* __src_type, const __class_type_info* __dst_type, ptrdiff_t __src2dst) { };
+}
+
 IServerGameDLL *realServerDLL;
 
 IVEngineServer	*engine = NULL;

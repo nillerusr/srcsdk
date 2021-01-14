@@ -21,12 +21,6 @@ Please, don't punish, Mr. Newell. :)
 #define bound( low, num, high ) ( boundmin( boundmax(num, high), low ))
 #define S
 
-#define TOUCH_YAW 120
-#define TOUCH_PITCH 90
-#define TOUCH_FORWARDZONE 0.8
-#define TOUCH_SIDEZONE 0.12
-#define SENSITIVITY 2
-
 CTouchControls g_Touch;
 static CTouchButton g_DefaultButtons[64];
 static int g_LastDefaultButton = 0;
@@ -98,7 +92,7 @@ void CTouchControls::Init( )
 {
     if( initialized )
         return;
-
+	
     engine->GetScreenSize( screen_w, screen_h );
     void *mainHandle = dlopen("libmain.so",0);
     void (*clientLoaded)(void) = (void (*)(void))dlsym( mainHandle, "clientLoaded" );
@@ -111,6 +105,7 @@ void CTouchControls::Init( )
         SDL_StartTextInput();
         dlclose( sdl2 );
 
+	char cfg_path[2048];
     w = a = s = d = false;
     initialized = true;
     btns.EnsureCapacity( 64 );
@@ -125,7 +120,11 @@ void CTouchControls::Init( )
     clientonly = false;
     precision = false;
     mouse_events = 0;
-
+	
+	snprintf(modname, sizeof modname, "%s", getenv("VALVE_MOD"));
+	snprintf(gamedir, sizeof gamedir, "%s", getenv("VALVE_CACHE_PATH"));
+	snprintf(cfg_path, sizeof cfg_path, "%s/%s/cfg/touch.cfg", gamedir, modname);
+	
     overlayPanel = new COverlayPanel(NULL, "OverlayPanel");
     overlayPanel->SetParent(enginevgui->GetPanel(PANEL_GAMEUIDLL));
     overlayPanel->SetVisible(true);
@@ -140,36 +139,45 @@ void CTouchControls::Init( )
     rgba_t color(255, 255, 255, 255);
 
     // buttons
-    bool is_portal = strstr(getenv("LIBRARY_CLIENT"), "portal" );
+    bool is_portal = strstr(modname, "portal" );
+	
     IN_TouchAddDefaultButton( "console", "vgui/touch/showconsole", "showconsole", KEY_NONE, touch_command, 0.920000, 0, 1.000000, 0.1422222, color, 0, 0 );
-    IN_TouchAddButton( "use", "vgui/touch/use", "+use", touch_command, 0.880000, 0.213333, 1.000000, 0.426667, -1, color );
-    IN_TouchAddButton( "jump", "vgui/touch/jump", "+jump", touch_command, 0.880000, 0.462222, 1.000000, 0.675556, -1, color );
-    IN_TouchAddButton( "attack", "vgui/touch/shoot", "+attack", touch_command, 0.760000, 0.583333, 0.880000, 0.796667, -1, color );
-    IN_TouchAddButton( "attack2", "vgui/touch/shoot_alt", "+attack2", touch_command, 0.760000, 0.320000, 0.880000, 0.533333, -1, color );
-    IN_TouchAddButton( "duck", "vgui/touch/crouch", "+duck", touch_command, 0.880000, 0.746667, 1.000000, 0.960000, -1, color );
-    IN_TouchAddButton( "tduck", "vgui/touch/tduck", ";+duck", touch_command, 0.560000, 0.817778, 0.620000, 0.924444, -1, color );
-    IN_TouchAddButton( "look", "", "", touch_look, 0.5, 0, 1, 1, -1, color );
-    IN_TouchAddButton( "move", "", "", touch_move, 0, 0, 0.5, 1, -1, color );
+	
+	FILE *touch_config = fopen(cfg_path, "r");
+	LogPrintf("%s", cfg_path);
+	if( touch_config )
+	{
+		ParseConfig(touch_config);
+		fclose(touch_config);
+		return;
+	}
+
+    IN_TouchAddButton( "use", "vgui/touch/use", "+use", touch_command, 0.880000, 0.213333, 1.000000, 0.426667, color );
+    IN_TouchAddButton( "jump", "vgui/touch/jump", "+jump", touch_command, 0.880000, 0.462222, 1.000000, 0.675556, color );
+    IN_TouchAddButton( "attack", "vgui/touch/shoot", "+attack", touch_command, 0.760000, 0.583333, 0.880000, 0.796667, color );
+    IN_TouchAddButton( "attack2", "vgui/touch/shoot_alt", "+attack2", touch_command, 0.760000, 0.320000, 0.880000, 0.533333, color );
+    IN_TouchAddButton( "duck", "vgui/touch/crouch", "+duck", touch_command, 0.880000, 0.746667, 1.000000, 0.960000, color );
+    IN_TouchAddButton( "tduck", "vgui/touch/tduck", ";+duck", touch_command, 0.560000, 0.817778, 0.620000, 0.924444, color );
+    IN_TouchAddButton( "look", "", "", touch_look, 0.5, 0, 1, 1, color );
+    IN_TouchAddButton( "move", "", "", touch_move, 0, 0, 0.5, 1, color );
     if( !is_portal )
     {
-        IN_TouchAddButton( "zoom", "vgui/touch/zoom", "+zoom", touch_command, 0.680000, 0.00000, 0.760000, 0.142222, -1, color );
-        IN_TouchAddButton( "speed", "vgui/touch/speed", "+speed", touch_command, 0.180000, 0.568889, 0.280000, 0.746667, -1, color );
-        IN_TouchAddButton( "loadquick", "vgui/touch/load", "load quick", touch_command, 0.760000, 0.000000, 0.840000, 0.142222, -1, color );
-        IN_TouchAddButton( "savequick", "vgui/touch/save", "save quick", touch_command, 0.840000, 0.000000, 0.920000, 0.142222, -1, color );
-        IN_TouchAddButton( "reload", "vgui/touch/reload", "+reload", touch_command, 0.000000, 0.320000, 0.120000, 0.533333, -1, color );
-        IN_TouchAddButton( "flashlight", "vgui/touch/flash_light_filled", "impulse 100", touch_command, 0.920000, 0.000000, 1.000000, 0.142222, -1, color );
-        IN_TouchAddButton( "invnext", "vgui/touch/next_weap", "invnext", touch_command, 0.000000, 0.533333, 0.120000, 0.746667, -1, color );
-        IN_TouchAddButton( "invprev", "vgui/touch/prev_weap", "invprev", touch_command, 0.000000, 0.071111, 0.120000, 0.284444, -1, color );
+        IN_TouchAddButton( "zoom", "vgui/touch/zoom", "+zoom", touch_command, 0.680000, 0.00000, 0.760000, 0.142222, color );
+        IN_TouchAddButton( "speed", "vgui/touch/speed", "+speed", touch_command, 0.180000, 0.568889, 0.280000, 0.746667, color );
+        IN_TouchAddButton( "loadquick", "vgui/touch/load", "load quick", touch_command, 0.760000, 0.000000, 0.840000, 0.142222, color );
+        IN_TouchAddButton( "savequick", "vgui/touch/save", "save quick", touch_command, 0.840000, 0.000000, 0.920000, 0.142222, color );
+        IN_TouchAddButton( "reload", "vgui/touch/reload", "+reload", touch_command, 0.000000, 0.320000, 0.120000, 0.533333, color );
+        IN_TouchAddButton( "flashlight", "vgui/touch/flash_light_filled", "impulse 100", touch_command, 0.920000, 0.000000, 1.000000, 0.142222, color );
+        IN_TouchAddButton( "invnext", "vgui/touch/next_weap", "invnext", touch_command, 0.000000, 0.533333, 0.120000, 0.746667, color );
+        IN_TouchAddButton( "invprev", "vgui/touch/prev_weap", "invprev", touch_command, 0.000000, 0.071111, 0.120000, 0.284444, color );
     }
     else
     {
-        IN_TouchAddButton( "loadquick", "vgui/touch/load", "load quick", touch_command, 0.840000, 0.000000, 0.920000, 0.142222, -1, color );
-        IN_TouchAddButton( "savequick", "vgui/touch/save", "save quick", touch_command, 0.920000, 0.000000, 1.000000, 0.142222, -1, color );
+        IN_TouchAddButton( "loadquick", "vgui/touch/load", "load quick", touch_command, 0.840000, 0.000000, 0.920000, 0.142222, color );
+        IN_TouchAddButton( "savequick", "vgui/touch/save", "save quick", touch_command, 0.920000, 0.000000, 1.000000, 0.142222, color );
     }
 
-    IN_TouchAddButton( "menu", "vgui/touch/menu", "gameui_activate", touch_command, 0.000000, 0.00000, 0.080000, 0.142222, -1, color );
-
-    Msg( "CTouchControls::Init()" );
+    IN_TouchAddButton( "menu", "vgui/touch/menu", "gameui_activate", touch_command, 0.000000, 0.00000, 0.080000, 0.142222, color );
 }
 
 void CTouchControls::VidInit( )
@@ -283,10 +291,10 @@ void CTouchControls::Paint( )
             if( g_Buttons[i].type == touch_move || g_Buttons[i].type == touch_look )
                 continue;
 
-            g_pSurface->DrawSetColor(255, 255, 255, 155);
+			g_pSurface->DrawSetColor(255, 255, 255, 155);			
             g_pSurface->DrawSetTexture( g_Buttons[i].textureID );
             g_pSurface->DrawTexturedRect( g_Buttons[i].x1*screen_w, g_Buttons[i].y1*screen_h, g_Buttons[i].x2*screen_w, g_Buttons[i].y2*screen_h );
-        }
+		}
     }
 }
 
@@ -314,7 +322,7 @@ void CTouchControls::IN_TouchAddDefaultButton( const char *name, const char *tex
     g_LastDefaultButton++;
 }
 
-void CTouchControls::IN_TouchAddButton( const char *name, const char *texturefile, const char *command, ETouchButtonType type, float x1, float y1, float x2, float y2, int fingerid, rgba_t color )
+void CTouchControls::IN_TouchAddButton( const char *name, const char *texturefile, const char *command, ETouchButtonType type, float x1, float y1, float x2, float y2, rgba_t color )
 {
     if( g_LastButton >= 64 )
         return;
@@ -351,16 +359,16 @@ void CTouchControls::TouchMotion( event_t *ev )
             if( g_Buttons[i].type == touch_move )
             {
                 //LogPrintf( "TouchMotion, touch_move x:%f, y:%f, startx:%f, starty:%f", x, y, move_start_x, move_start_y );
-                f = ( move_start_y - ev->y ) / TOUCH_SIDEZONE;
-                s = ( move_start_x - ev->x ) / TOUCH_SIDEZONE;
+                f = ( move_start_y - ev->y ) / touch_settings.sidezone;
+                s = ( move_start_x - ev->x ) / touch_settings.sidezone;
                 forward += bound( -1, f, 1 );
                 side += bound( -1, s, 1 );
                 movecount++;
             }
             else if( g_Buttons[i].type == touch_look )
             {
-                yaw += TOUCH_YAW * ( dx - ev->x ) * SENSITIVITY;
-                pitch -= TOUCH_PITCH * ( dy - ev->y ) * SENSITIVITY;
+                yaw += touch_settings.yaw * ( dx - ev->x ) * touch_settings.sensitivity;
+                pitch -= touch_settings.pitch * ( dy - ev->y ) * touch_settings.sensitivity;
                 dx = ev->x;
                 dy = ev->y;
             }
@@ -479,4 +487,78 @@ void CTouchControls::ButtonPress( event_t *ev )
             }
         }
     }
+}
+
+void CTouchControls::ParseConfig(FILE *cfg)
+{
+	int ch,i,j;
+	char args[32][256];
+	bool quote = false;
+	i = j = 0;
+	while( ( ch = fgetc(cfg)) != EOF )
+	{
+		if( ch == '"' )
+		{
+			if( quote )
+				quote = false;
+			else
+				quote = true;
+			continue;
+		}
+		
+		if( ch == '\n' )
+		{
+
+			args[i][j] = '\0';
+			i++;
+
+			if( strcmp( args[0], "sensitivity") == 0 && i > 1 )
+			{
+				touch_settings.sensitivity = atof(args[1]);
+			}
+			else if( strcmp( args[0], "touch_yaw") == 0 && i > 1 )
+			{
+				touch_settings.yaw = atof(args[1]);
+			}
+			else if(strcmp( args[0], "touch_pitch") == 0 && i > 1 )
+			{
+				touch_settings.pitch = atof(args[1]);
+			}
+			else if(strcmp( args[0], "touch_sizezone") == 0 && i > 1 )
+			{
+				touch_settings.sidezone = atof(args[1]);
+			}
+			else if(strcmp( args[0], "touch_forwardzone") == 0 && i > 1 )
+			{
+				touch_settings.forwardzone = atof(args[1]);				
+			}
+			else if(strcmp( args[0], "touch_addbutton") == 0 && i > 12 )
+			{
+				ETouchButtonType type = touch_command;
+				if( strcmp( args[3], "_move") == 0 )
+					type = touch_move;
+				else if( strcmp( args[3], "_look") == 0 )
+					type = touch_look;
+				
+				IN_TouchAddButton(args[1], args[2], args[3], type, atof(args[4]), atof(args[5]), atof(args[6]), atof(args[7]), rgba_t(atoi(args[8]), atoi(args[9]), atoi(args[10]), atoi(args[11])) );
+			}
+			
+			i = 0;
+			j = 0;
+			continue;
+		}
+		
+		if(ch == ' ')
+		{
+			if( !quote )
+			{
+				args[i][j] = '\0';
+				i++;
+				j = 0;
+				continue;
+			}
+		}
+		args[i][j] = ch;
+		j++;
+	}
 }

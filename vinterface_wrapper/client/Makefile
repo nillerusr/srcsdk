@@ -30,12 +30,12 @@ LIBS = \
 	../../lib/public/armeabi-v7a/libandroid_support.a
 
 
-OPTFLAGS=-march=armv7-a -mtune=cortex-a15 -mthumb -mfloat-abi=softfp -mfpu=neon -mcpu=cortex-a9 -pipe -mvectorize-with-neon-quad -fno-exceptions -fPIC -fvisibility=hidden
-CXXFLAGS=$(OPTFLAGS) -fpermissive -std=gnu++0x -Wno-narrowing
-CFLAGS=$(OPTFLAGS)
+OPTFLAGS=-march=armv7-a -mtune=cortex-a15 -mthumb -mfloat-abi=softfp -mfpu=neon -mcpu=cortex-a9 -pipe -mvectorize-with-neon-quad
+CXXFLAGS=-fpermissive -std=gnu++0x -fno-exceptions -fPIC -fvisibility=hidden
+CFLAGS=
 
 INCLUDES=-I. -I../ -I../../public/ -I../../public/tier0/ -I../../public/tier1/ -I../../common/ -I../../common/GameUI/
-LDFLAGS = -shared -llog -march=armv7-a -mtune=cortex-a15 -mthumb -mfloat-abi=softfp -mfpu=neon -mcpu=cortex-a9 -pipe -mvectorize-with-neon-quad -fPIC -no-canonical-prefixes -Wl,--fix-cortex-a8 -Wl,--no-warn-mismatch -Wl,--no-undefined -Wl,-z,noexecstack -Wl,-z,relro -Wl,-z,now -pthread -L../../lib/public/armeabi-v7a -ltier0 -lvstdlib
+LDFLAGS = -shared -llog -fPIC -Wl,--no-warn-mismatch -Wl,--no-undefined -pthread -L../../lib/public/armeabi-v7a -ltier0 -lvstdlib
 
 ifeq ($(NDK),1)
 	SYSROOT := "$(NDK_PATH)/platforms/android-$(APP_API_LEVEL)/arch-arm"
@@ -50,13 +50,13 @@ else
 endif
 
 %.o : %.cpp
-	$(CXX) $(CXXFLAGS) $(INCLUDES) $(DEFINES) -c "$<" -o $(PWD)/"$@"
+	$(CXX) $(OPTFLAGS) $(CXXFLAGS) $(INCLUDES) $(DEFINES) -c "$<" -o $(PWD)/"$@"
 
 %.o : %.c
-	$(CC) $(CFLAGS) $(INCLUDES) $(DEFINES) -c "$<" -o $(PWD)/"$@"
+	$(CC) $(OPTFLAGS) $(CFLAGS) $(INCLUDES) $(DEFINES) -c "$<" -o $(PWD)/"$@"
 
 $(DLLNAME).so : $(OBJS)
-	$(CXX) -o $(DLLNAME).so $(LDFLAGS) $(OBJS) $(LIBS)
+	$(CXX) -o $(DLLNAME).so $(OPTFLAGS) $(LDFLAGS) $(OBJS) $(LIBS)
 clean:
 	-rm -f $(OBJS)
 	-rm -f $(DLLNAME).so
