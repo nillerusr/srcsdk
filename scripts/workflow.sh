@@ -10,7 +10,7 @@ build()
 	PW=$(pwd)
 	cd $1
 	make NDK=1 NDK_PATH=$NDK_HOME APP_API_LEVEL=19 CFG=debug NDK_VERBOSE=1 -j$(nproc --all)
-	cp $1 $LIBPATH && echo $1 Installed
+	cp $2 $LIBPATH && echo $2 Installed
 	cd $PW
 }
 
