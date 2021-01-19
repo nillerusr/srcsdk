@@ -23,7 +23,7 @@ jobs:
         git submodule init && git submodule update
 
         scripts/workflow.sh
-	cd srceng-android
+        cd srceng-android
         JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64/ ANDROID_HOME=android-sdk/ ant debug
 
     - name: Upload files
