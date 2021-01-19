@@ -24,7 +24,7 @@ jobs:
 
         scripts/workflow.sh
         cd srceng-android
-        JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64/ ANDROID_HOME=android-sdk/ ant debug
+        JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64/ ANDROID_HOME=../android-sdk/ ant debug
 
     - name: Upload files
       shell: bash

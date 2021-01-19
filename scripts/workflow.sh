@@ -3,29 +3,20 @@
 export NDK_HOME=$(pwd)/ndk-binaries
 export PATH=$PATH:$(pwd)/ndk-binaries
 export LIBPATH=$(pwd)/srceng-android/libs/armeabi-v7a
+export NDK_TOOLCHAIN_VERSION=4.9
 
-inst()
+build()
 {
-	cp $1 $LIBPATH
+	PW=$(pwd)
+	cd $1
+	make NDK=1 NDK_PATH=$NDK_HOME APP_API_LEVEL=19 CFG=debug NDK_VERBOSE=1 -j$(nproc --all)
+	cp $1 $LIBPATH && echo $1 Installed
+	cd $PW
 }
 
-cd main
-./build.sh -j$(nproc --all)
-inst libmain.so
 
-cd ../gl4es/
-./build.sh -j$(nproc --all)
-inst libRegal.so
-
-cd ../vinterface_wrapper/client
-./build-ndk.sh -j$(nproc --all)
-inst libclient.so
-
-cd ../server
-./build-ndk.sh -j$(nproc --all)
-inst libserver.so
-
-cd ../../srceng-android/jni/src/tierhook/
-./build-ndk.sh
-inst libtierhook.so
-cd ../../../../
+build main libmain.so
+build gl4es libRegal.so
+build vinterface_wrapper/client libclient.so
+build vinterface_wrapper/server libserver.so
+build srceng-android/jni/src/tierhook libtierhook.so
