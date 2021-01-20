@@ -89,6 +89,7 @@ SRCS = $(GL4ES_PATH)/src/gl/arbconverter.c \
 	$(GL4ES_PATH)/src/glx/lookup.c \
 	$(GL4ES_PATH)/src/glx/gbm.c \
 	$(GL4ES_PATH)/src/glx/streaming.c \
+	$(GL4ES_PATH)/src/gl/samplers.c \
 	eglwrap.c \
 
 OBJS += $(patsubst %.c,%.o,$(SRCS))
