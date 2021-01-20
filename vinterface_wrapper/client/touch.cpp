@@ -140,9 +140,10 @@ void CTouchControls::Init( )
 
     // buttons
     bool is_portal = strstr(modname, "portal" );
-	
+
     IN_TouchAddDefaultButton( "console", "vgui/touch/showconsole", "showconsole", KEY_NONE, touch_command, 0.920000, 0, 1.000000, 0.1422222, color, 0, 0 );
-	
+    IN_TouchAddDefaultButton( "back", "vgui/touch/back", "", KEY_XBUTTON_B, touch_key, 0.920000, 0.851222, 1.000000, 1.000000, color, 0, 0 );
+
 	FILE *touch_config = fopen(cfg_path, "r");
 	LogPrintf("%s", cfg_path);
 	if( touch_config )
