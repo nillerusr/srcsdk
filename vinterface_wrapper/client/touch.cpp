@@ -51,10 +51,13 @@ t_glEnable _glEnable;
 
 static bool show_touch = true;
 
-DLLEXPORT void showTouch(bool show)
+static int scr_width, scr_height;
+DLLEXPORT void showTouch(bool show, int width, int height)
 {
 	LogPrintf("showTouch called\n");
 	show_touch = show;
+	scr_height = height;
+	scr_width = width;
 }
 
 #define GRID_COUNT 50
@@ -199,52 +202,6 @@ void CTouchControls::IN_Move()
 
         movecount = side = forward = 0;
     }
-
-/*
-    if( side > 0.9 && !a )
-    {
-        a = true;
-        engine->ClientCmd("+moveleft");
-    }
-    else if( a )
-    {
-        a = false;
-        engine->ClientCmd("-moveleft");
-    }
-
-    if( side < -0.9 && !d )
-    {
-        d = true;
-        engine->ClientCmd("+moveright");
-    }
-    else if( d )
-    {
-        d = false;
-        engine->ClientCmd("-moveright");
-    }
-
-    if( forward < -0.7 && !s )
-    {
-        s = true;
-        engine->ClientCmd("+back");
-    }
-    else if( s )
-    {
-        s = false;
-        engine->ClientCmd("-back");
-    }
-
-    if( forward > 0.7 && !w )
-    {
-        w = true;
-        engine->ClientCmd("+forward");
-    }
-    else if( w )
-    {
-        w = false;
-        engine->ClientCmd("-forward");
-    }
-*/
 }
 
 void CTouchControls::IN_Look()
@@ -308,10 +265,12 @@ void CTouchControls::IN_TouchAddDefaultButton( const char *name, const char *tex
     strncpy( g_DefaultButtons[g_LastDefaultButton].texturefile, texturefile, 256 );
     strncpy( g_DefaultButtons[g_LastDefaultButton].command, command, 256 );
     g_DefaultButtons[g_LastDefaultButton].key = key;
-    g_DefaultButtons[g_LastDefaultButton].x1 =  x1;
-    g_DefaultButtons[g_LastDefaultButton].y1 =  y1 ;
-    g_DefaultButtons[g_LastDefaultButton].x2 =  x2;
-    g_DefaultButtons[g_LastDefaultButton].y2 = y2;
+	IN_TouchCheckCoords(&x1, &y1, &x2, &y2);		
+    g_DefaultButtons[g_LastDefaultButton].x1 = x1;
+    g_DefaultButtons[g_LastDefaultButton].y1 = y1 ;
+    g_DefaultButtons[g_LastDefaultButton].x2 = x2;
+	g_DefaultButtons[g_LastDefaultButton].y2 = y1 + ( x2 - x1 ) * (((float)scr_width)/scr_height);
+	IN_TouchCheckCoords(&g_DefaultButtons[g_LastDefaultButton].x1, &g_DefaultButtons[g_LastDefaultButton].y1, &g_DefaultButtons[g_LastDefaultButton].x2, &g_DefaultButtons[g_LastDefaultButton].y2);	
     g_DefaultButtons[g_LastDefaultButton].color = color;
     g_DefaultButtons[g_LastDefaultButton].type = type;
     g_DefaultButtons[g_LastDefaultButton].aspect = aspect;
@@ -335,7 +294,7 @@ void CTouchControls::IN_TouchAddButton( const char *name, const char *texturefil
     g_Buttons[g_LastButton].x1 = x1;
     g_Buttons[g_LastButton].y1 = y1;
     g_Buttons[g_LastButton].x2 = x2;
-    g_Buttons[g_LastButton].y2 = y1 + ( x2 - x1 ) * (((float)screen_w)/screen_h);
+    g_Buttons[g_LastButton].y2 = y1 + ( x2 - x1 ) * (((float)scr_width)/scr_height);
 	IN_TouchCheckCoords(&g_Buttons[g_LastButton].x1, &g_Buttons[g_LastButton].y1, &g_Buttons[g_LastButton].x2, &g_Buttons[g_LastButton].y2);
     g_Buttons[g_LastButton].color = color;
     g_Buttons[g_LastButton].type = type;

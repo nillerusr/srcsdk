@@ -21,6 +21,7 @@ char gameName[512];
 char startArgs[256][128];
 char language[1024] = "english";
 int iLastArgs = 0;
+static int scr_width,scr_height;
 
 bool bClient_loaded = false;
 bool bShowTouch = true;
@@ -109,7 +110,6 @@ DLLEXPORT int Java_com_valvesoftware_ValveActivity2_setGame(JNIEnv *jenv, jclass
 	return setenv( "VALVE_MOD",  jenv->GetStringUTFChars(game, NULL), 1);
 }
 
-DLLEXPORT 
 typedef void (*t_TouchEvent)(int finger, int x, int y, int act);
 t_TouchEvent TouchEvent;
 
@@ -118,7 +118,7 @@ DLLEXPORT void clientLoaded( void )
 	bClient_loaded = true;
 	libclient = dlopen("libclient.so",0);
 	TouchEvent = (t_TouchEvent)dlsym(libclient, "TouchEvent");
-	((void (*)(bool))dlsym(libclient, "showTouch"))(bShowTouch);
+	((void (*)(bool, int, int))dlsym(libclient, "showTouch"))(bShowTouch, scr_width, scr_height);
 }
 
 DLLEXPORT void showKeyboard( int show )
@@ -126,8 +126,10 @@ DLLEXPORT void showKeyboard( int show )
 	jni.env->CallStaticVoidMethod( jni.actcls, jni.enableTextInput, show );
 }
 
-DLLEXPORT void JNICALL Java_com_valvesoftware_ValveActivity2_showTouch(JNIEnv *env, jobject obj, jboolean show_touch)
+DLLEXPORT void JNICALL Java_com_valvesoftware_ValveActivity2_showTouch(JNIEnv *env, jobject obj, jboolean show_touch, jint width, jint height)
 {
+	scr_width = width;
+	scr_height = height;
 	bShowTouch = show_touch;
 }
 
