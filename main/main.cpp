@@ -224,7 +224,8 @@ void SetStartArgs()
 	SetArg(lang);
 	SetArg(javaArgv);
 	SetArg(gameName);
-	SetArg("-nosteam "
+	SetArg("-window "
+			"-nosteam "
 			"-nouserclip "
 			"+sv_unlockedchapters 99 "
 			"+mat_queue_mode 2 "
@@ -235,8 +236,7 @@ void SetStartArgs()
 			"-mat_antialias 1 "
 			"+r_flashlightdepthtexture 1 "
 			"+gl_dropmips 1 "
-			"-insecure "
-			"-window");
+			"-insecure");
 
 	if( bUseGL )
 		SetArg("-userclip "
