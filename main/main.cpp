@@ -235,7 +235,8 @@ void SetStartArgs()
 			"-mat_antialias 1 "
 			"+r_flashlightdepthtexture 1 "
 			"+gl_dropmips 1 "
-			"-insecure");
+			"-insecure "
+			"-window");
 
 	if( bUseGL )
 		SetArg("-userclip "
