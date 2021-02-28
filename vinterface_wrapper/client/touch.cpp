@@ -26,7 +26,7 @@ static CTouchButton g_DefaultButtons[64];
 static int g_LastDefaultButton = 0;
 int screen_h, screen_w;
 
-static CTouchButton g_Buttons[64];
+static CTouchButton g_Buttons[512];
 static int g_LastButton = 0;
 
 void *mainHandle;
@@ -358,7 +358,7 @@ void CTouchControls::ButtonPress( event_t *ev )
             g_pInputInternal->SetCursorPos((int)(ev->x*screen_w), (int)(ev->y*screen_h));
             g_pInputInternal->UpdateCursorPosInternal((int)(ev->x*screen_w), (int)(ev->y*screen_h));
             vgui::Panel *panel = vgui::ipanel()->GetPanel(g_pInputInternal->GetMouseOver(), "GameUI");
-            MenuTouch::TouchDown(panel);
+            MenuTouch::TouchDown(panel, (int)(ev->x*screen_w), (int)(ev->y*screen_h));
         }
         else
         {
@@ -414,7 +414,7 @@ void CTouchControls::ButtonPress( event_t *ev )
             g_pInputInternal->SetCursorPos((int)(ev->x*screen_w), (int)(ev->y*screen_h));
             g_pInputInternal->UpdateCursorPosInternal((int)(ev->x*screen_w), (int)(ev->y*screen_h));
             vgui::Panel *panel = vgui::ipanel()->GetPanel(g_pInputInternal->GetMouseOver(), "GameUI");
-            MenuTouch::TouchUp(panel);
+            MenuTouch::TouchUp(panel, (int)(ev->x*screen_w), (int)(ev->y*screen_h));
             g_pInputInternal->SetCursorPos((int)(screen_w/2), (int)(screen_h/2));
             g_pInputInternal->UpdateCursorPosInternal((int)(screen_w/2), (int)(screen_h/2));
         }
