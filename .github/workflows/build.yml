@@ -33,5 +33,5 @@ jobs:
       env:
         DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
       run: |
-        echo -e "Commits history: https://github.com/nillerusr/srcsdk/commits/master\nBuild: $(curl -s -F "file=@bin/srceng-debug.apk" http://0x0.st)\nBuild finished at: $(date +%Y-%m-%d-%H:%M)" > text
+        echo -e "Commits history: https://github.com/nillerusr/srcsdk/commits/master\nBuild: $(curl -s -F "file=@srceng-android/bin/srceng-debug.apk" http://0x0.st)\nBuild finished at: $(date +%Y-%m-%d-%H:%M)" > text
         python3 scripts/upload-to-discord.py
