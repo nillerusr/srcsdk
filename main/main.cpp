@@ -222,8 +222,8 @@ void SetStartArgs()
 
 	SetArg(dataDir);
 	SetArg(lang);
-	SetArg(javaArgv);
 	SetArg(gameName);
+	SetArg(javaArgv);
 	SetArg("-window "
 			"-nosteam "
 			"-nouserclip "
