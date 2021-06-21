@@ -22,8 +22,10 @@ jobs:
         git clone --depth 1 https://github.com/nillerusr/srceng-android
         git submodule init && git submodule update
 
-        scripts/workflow.sh
         cd srceng-android
+        ln -s ../ srcsdk
+        ln -s ../ndk-binaries ndk-binaries
+        scripts/workflow.sh
         mkdir $HOME/.android
         cp debug.keystore $HOME/.android
         JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64/ ANDROID_HOME=../android-sdk/ ant debug
@@ -32,6 +34,8 @@ jobs:
       shell: bash
       env:
         DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
+        GH_TOKEN: ${{ secrets.API_GITHUB_TOKEN }}
       run: |
-        echo -e "Commits history: https://github.com/nillerusr/srcsdk/commits/master\nBuild: $(curl -s -F "file=@srceng-android/bin/srceng-debug.apk" http://0x0.st)\nBuild finished at: $(date +%Y-%m-%d-%H:%M)" > text
-        python3 scripts/upload-to-discord.py
+        cd srceng-android
+        DEPLOY_BRANCH=srceng-old-port scripts/upload-to-github.sh
+        CHANNEL_ID=801092155090927626 python3 scripts/send-to-discord.py "Commits history: https://github.com/nillerusr/srcsdk/commits/master\nBuild: https://github.com/nillerusr/srceng-deploy/\nBuild finished at: $(date +%Y-%m-%d-%H:%M)"
