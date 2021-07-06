@@ -22,13 +22,12 @@ jobs:
         git clone --depth 1 https://github.com/nillerusr/srceng-android
         git submodule init && git submodule update
 
+        export COMMIT=$(git rev-parse HEAD)
         cd srceng-android
         ln -s ../ srcsdk
         ln -s ../ndk-binaries ndk-binaries
-        scripts/workflow.sh
-        mkdir $HOME/.android
-        cp debug.keystore $HOME/.android
-        JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64/ ANDROID_HOME=../android-sdk/ ant debug
+        ln -s ../android-sdk android-sdk
+        DEPLOY_BRANCH=srceng-old-port scripts/workflow.sh
 
     - name: Upload files
       shell: bash
@@ -37,5 +36,5 @@ jobs:
         GH_TOKEN: ${{ secrets.API_GITHUB_TOKEN }}
       run: |
         cd srceng-android
-        DEPLOY_BRANCH=srceng-old-port scripts/upload-to-github.sh
+        DEPLOY_BRANCH=srceng-old-port scripts/upload-to-github.sh bin/srceng-debug.apk version
         CHANNEL_ID=801092155090927626 python3 scripts/send-to-discord.py "Commits history: https://github.com/nillerusr/srcsdk/commits/master\nBuild: https://github.com/nillerusr/srceng-deploy/\nBuild finished at: $(date +%Y-%m-%d-%H:%M)"
